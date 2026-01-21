@@ -80,19 +80,36 @@ download_file() {
 
 github_api_request() {
     local url="$1"
+    local temp_file=$(mktemp)
+    local http_code=""
+    
     if [ "$DOWNLOADER" = "curl" ]; then
         if [ -n "${GITHUB_TOKEN:-}" ]; then
-            curl -fsSL -H "Accept: application/vnd.github+json" -H "User-Agent: craft-agents-installer" -H "Authorization: Bearer $GITHUB_TOKEN" "$url"
+            http_code=$(curl -sSL -H "Accept: application/vnd.github+json" -H "User-Agent: craft-agents-installer" -H "Authorization: Bearer $GITHUB_TOKEN" -w "%{http_code}" -o "$temp_file" "$url")
         else
-            curl -fsSL -H "Accept: application/vnd.github+json" -H "User-Agent: craft-agents-installer" "$url"
+            http_code=$(curl -sSL -H "Accept: application/vnd.github+json" -H "User-Agent: craft-agents-installer" -w "%{http_code}" -o "$temp_file" "$url")
         fi
+        cat "$temp_file"
+        echo ""
+        echo "$http_code"
     else
+        # For wget, check response content for errors
         if [ -n "${GITHUB_TOKEN:-}" ]; then
-            wget -q -O - --header="Accept: application/vnd.github+json" --header="User-Agent: craft-agents-installer" --header="Authorization: Bearer $GITHUB_TOKEN" "$url"
+            wget -q -O "$temp_file" --header="Accept: application/vnd.github+json" --header="User-Agent: craft-agents-installer" --header="Authorization: Bearer $GITHUB_TOKEN" "$url" 2>/dev/null
         else
-            wget -q -O - --header="Accept: application/vnd.github+json" --header="User-Agent: craft-agents-installer" "$url"
+            wget -q -O "$temp_file" --header="Accept: application/vnd.github+json" --header="User-Agent: craft-agents-installer" "$url" 2>/dev/null
+        fi
+        if [ $? -eq 0 ] && [ -s "$temp_file" ]; then
+            cat "$temp_file"
+            echo ""
+            echo "200"
+        else
+            cat "$temp_file" 2>/dev/null || echo "{}"
+            echo ""
+            echo "000"
         fi
     fi
+    rm -f "$temp_file"
 }
 
 # Try to infer repo from git remote when running inside a clone
@@ -172,16 +189,21 @@ else
     release_url="$GITHUB_API_BASE/repos/$GITHUB_REPO/releases/latest"
 fi
 
-if ! release_json=$(github_api_request "$release_url" 2>&1); then
-    http_code=""
-    if [ "$DOWNLOADER" = "curl" ]; then
-        http_code=$(echo "$release_json" | grep -oP 'HTTP/\d\.\d \K\d+' | tail -1 || echo "")
-    fi
-    if [ "$http_code" = "404" ]; then
+# Get response with HTTP status code appended
+response=$(github_api_request "$release_url" 2>&1)
+http_code=$(echo "$response" | tail -1)
+release_json=$(echo "$response" | sed '$d')
+
+if [ "$http_code" != "200" ]; then
+    if [ "$http_code" = "404" ] || echo "$release_json" | grep -q '"message".*"Not Found"'; then
         error "No releases found for $GITHUB_REPO.\n  This repository may not have any releases yet.\n  Set CRAFT_GITHUB_REPO to use a different repository, or create a release first."
     else
-        error "Failed to fetch release from $GITHUB_REPO.\n  Set CRAFT_GITHUB_REPO or GITHUB_TOKEN if needed.\n  Error: $release_json"
+        error "Failed to fetch release from $GITHUB_REPO (HTTP $http_code).\n  Set CRAFT_GITHUB_REPO or GITHUB_TOKEN if needed.\n  Response: $release_json"
     fi
+fi
+
+if [ -z "$release_json" ]; then
+    error "Empty response from GitHub API. Set GITHUB_TOKEN if rate-limited."
 fi
 if [ "$HAS_JQ" = true ]; then
     tag_name=$(echo "$release_json" | jq -r '.tag_name // empty')
