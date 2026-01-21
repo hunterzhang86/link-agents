@@ -716,6 +716,7 @@ export interface ElectronAPI {
     authType?: AuthType  // Optional - if not provided, preserves existing auth type (for add workspace)
     workspace?: { name: string; iconUrl?: string; mcpUrl?: string }  // Optional - if not provided, only updates billing
     credential?: string  // API key or OAuth token based on authType
+    baseUrl?: string  // Optional - Anthropic API base URL (for API key auth)
     mcpCredentials?: { accessToken: string; clientId?: string }  // MCP OAuth credentials
   }): Promise<OnboardingSaveResult>
   // Claude OAuth
@@ -730,7 +731,7 @@ export interface ElectronAPI {
 
   // Settings - Billing
   getBillingMethod(): Promise<BillingMethodInfo>
-  updateBillingMethod(authType: AuthType, credential?: string): Promise<void>
+  updateBillingMethod(authType: AuthType, credential?: string, baseUrl?: string): Promise<void>
 
   // Settings - Model (global default)
   getModel(): Promise<string | null>

@@ -31,6 +31,8 @@ export interface AuthState {
     hasCredentials: boolean;
     /** Anthropic API key (if using api_key auth type) */
     apiKey: string | null;
+    /** Anthropic API base URL (optional, if using api_key auth type) */
+    baseUrl: string | null;
     /** Claude Max OAuth token (if using oauth_token auth type) */
     claudeOAuthToken: string | null;
   };
@@ -132,6 +134,7 @@ export async function getAuthState(): Promise<AuthState> {
 
   const craftToken = await manager.getCraftOAuth();
   const apiKey = await manager.getApiKey();
+  const baseUrl = await manager.getBaseUrl();
   const claudeOAuth = await getValidClaudeOAuthToken();
   const activeWorkspace = getActiveWorkspace();
 
@@ -152,6 +155,7 @@ export async function getAuthState(): Promise<AuthState> {
       type: config?.authType ?? null,
       hasCredentials,
       apiKey,
+      baseUrl,
       claudeOAuthToken: claudeOAuth,
     },
     workspace: {

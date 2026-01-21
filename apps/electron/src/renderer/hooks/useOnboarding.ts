@@ -37,7 +37,7 @@ interface UseOnboardingReturn {
   handleSelectBillingMethod: (method: BillingMethod) => void
 
   // Credentials
-  handleSubmitCredential: (credential: string) => void
+  handleSubmitCredential: (credential: string, baseUrl?: string) => void
   handleStartOAuth: () => void
 
   // Claude OAuth
@@ -80,7 +80,7 @@ export function useOnboarding({
   })
 
   // Save configuration
-  const handleSaveConfig = useCallback(async (credential?: string) => {
+  const handleSaveConfig = useCallback(async (credential?: string, baseUrl?: string) => {
     if (!state.billingMethod) {
       console.log('[Onboarding] No billing method, returning early')
       return
@@ -95,6 +95,7 @@ export function useOnboarding({
       const result = await window.electronAPI.saveOnboardingConfig({
         authType,
         credential,
+        baseUrl,
       })
 
       if (result.success) {
@@ -157,7 +158,7 @@ export function useOnboarding({
   }, [])
 
   // Submit credential (API key)
-  const handleSubmitCredential = useCallback(async (credential: string) => {
+  const handleSubmitCredential = useCallback(async (credential: string, baseUrl?: string) => {
     setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
 
     try {
@@ -170,7 +171,7 @@ export function useOnboarding({
         return
       }
 
-      await handleSaveConfig(credential)
+      await handleSaveConfig(credential, baseUrl)
 
       setState(s => ({
         ...s,

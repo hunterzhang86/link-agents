@@ -29,8 +29,12 @@ async function getAnthropicClient(): Promise<Anthropic | null> {
   // Option 1: Direct API key from env (set by setAuthEnvironment)
   const envApiKey = process.env.ANTHROPIC_API_KEY;
   if (envApiKey) {
-    anthropicClient = new Anthropic({ apiKey: envApiKey });
-    debug('[summarize] Using ANTHROPIC_API_KEY for summarization');
+    const baseURL = process.env.ANTHROPIC_BASE_URL;
+    anthropicClient = new Anthropic({
+      apiKey: envApiKey,
+      ...(baseURL && { baseURL })
+    });
+    debug('[summarize] Using ANTHROPIC_API_KEY for summarization' + (baseURL ? ` with base URL: ${baseURL}` : ''));
     return anthropicClient;
   }
 

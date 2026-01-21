@@ -30,7 +30,7 @@ interface OnboardingWizardProps {
   onContinue: () => void
   onBack: () => void
   onSelectBillingMethod: (method: BillingMethod) => void
-  onSubmitCredential: (credential: string) => void
+  onSubmitCredential: (credential: string, baseUrl?: string) => void
   onStartOAuth?: () => void
   onFinish: () => void
 

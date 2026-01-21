@@ -20,6 +20,7 @@
 /** Types of credentials we store */
 export type CredentialType =
   | 'anthropic_api_key'
+  | 'anthropic_base_url'
   | 'claude_oauth'
   | 'craft_oauth'
   | 'workspace_oauth'
@@ -35,6 +36,7 @@ export type CredentialType =
 /** Valid credential types for validation */
 const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
   'anthropic_api_key',
+  'anthropic_base_url',
   'claude_oauth',
   'craft_oauth',
   'workspace_oauth',

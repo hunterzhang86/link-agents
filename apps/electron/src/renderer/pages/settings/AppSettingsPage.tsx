@@ -65,7 +65,9 @@ export const meta: DetailsPageMeta = {
 
 interface ApiKeyDialogProps {
   value: string
+  baseUrl: string
   onChange: (value: string) => void
+  onBaseUrlChange: (value: string) => void
   onSave: () => void
   onCancel: () => void
   isSaving: boolean
@@ -73,7 +75,7 @@ interface ApiKeyDialogProps {
   error?: string
 }
 
-function ApiKeyDialogContent({ value, onChange, onSave, onCancel, isSaving, hasExistingKey, error }: ApiKeyDialogProps) {
+function ApiKeyDialogContent({ value, baseUrl, onChange, onBaseUrlChange, onSave, onCancel, isSaving, hasExistingKey, error }: ApiKeyDialogProps) {
   const [showValue, setShowValue] = useState(false)
 
   return (
@@ -96,24 +98,44 @@ function ApiKeyDialogContent({ value, onChange, onSave, onCancel, isSaving, hasE
         </a>
       </p>
 
-      {/* Input */}
-      <div className="relative">
+      {/* API Key Input */}
+      <div className="space-y-2">
+        <Label htmlFor="api-key">API Key</Label>
+        <div className="relative">
+          <Input
+            id="api-key"
+            type={showValue ? 'text' : 'password'}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={hasExistingKey ? '••••••••••••••••' : 'sk-ant-...'}
+            className={cn("pr-10", error && "border-destructive")}
+            disabled={isSaving}
+          />
+          <button
+            type="button"
+            onClick={() => setShowValue(!showValue)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            tabIndex={-1}
+          >
+            {showValue ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Base URL Input */}
+      <div className="space-y-2">
+        <Label htmlFor="base-url">Base URL (optional)</Label>
         <Input
-          type={showValue ? 'text' : 'password'}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={hasExistingKey ? '••••••••••••••••' : 'sk-ant-...'}
-          className={cn("pr-10", error && "border-destructive")}
+          id="base-url"
+          type="text"
+          value={baseUrl}
+          onChange={(e) => onBaseUrlChange(e.target.value)}
+          placeholder="https://api.anthropic.com"
           disabled={isSaving}
         />
-        <button
-          type="button"
-          onClick={() => setShowValue(!showValue)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          tabIndex={-1}
-        >
-          {showValue ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </button>
+        <p className="text-xs text-muted-foreground">
+          Leave empty to use the default Anthropic API endpoint
+        </p>
       </div>
 
       {/* Error message */}
@@ -338,6 +360,7 @@ export default function AppSettingsPage() {
 
   // API Key state
   const [apiKeyValue, setApiKeyValue] = useState('')
+  const [baseUrlValue, setBaseUrlValue] = useState('')
   const [isSavingApiKey, setIsSavingApiKey] = useState(false)
   const [apiKeyError, setApiKeyError] = useState<string | undefined>()
 
@@ -422,21 +445,18 @@ export default function AppSettingsPage() {
 
   // Handle clicking on a billing method option
   const handleMethodClick = useCallback(async (method: AuthType) => {
-    if (method === authType && hasCredential) {
-      setExpandedMethod(null)
-      return
-    }
-
+    // Always allow opening the dialog to edit credentials
     setExpandedMethod(method)
     setApiKeyError(undefined)
     setClaudeOAuthStatus('idle')
     setClaudeOAuthError(undefined)
-  }, [authType, hasCredential])
+  }, [])
 
   // Cancel billing method expansion
   const handleCancel = useCallback(() => {
     setExpandedMethod(null)
     setApiKeyValue('')
+    setBaseUrlValue('')
     setApiKeyError(undefined)
     setClaudeOAuthStatus('idle')
     setClaudeOAuthError(undefined)
@@ -449,10 +469,11 @@ export default function AppSettingsPage() {
     setIsSavingApiKey(true)
     setApiKeyError(undefined)
     try {
-      await window.electronAPI.updateBillingMethod('api_key', apiKeyValue.trim())
+      await window.electronAPI.updateBillingMethod('api_key', apiKeyValue.trim(), baseUrlValue.trim() || undefined)
       setAuthType('api_key')
       setHasCredential(true)
       setApiKeyValue('')
+      setBaseUrlValue('')
       setExpandedMethod(null)
     } catch (error) {
       console.error('Failed to save API key:', error)
@@ -460,7 +481,7 @@ export default function AppSettingsPage() {
     } finally {
       setIsSavingApiKey(false)
     }
-  }, [apiKeyValue])
+  }, [apiKeyValue, baseUrlValue])
 
   // Use existing Claude token
   const handleUseExistingClaudeToken = useCallback(async () => {
@@ -653,7 +674,9 @@ export default function AppSettingsPage() {
                   </DialogHeader>
                   <ApiKeyDialogContent
                     value={apiKeyValue}
+                    baseUrl={baseUrlValue}
                     onChange={setApiKeyValue}
+                    onBaseUrlChange={setBaseUrlValue}
                     onSave={handleSaveApiKey}
                     onCancel={handleCancel}
                     isSaving={isSavingApiKey}

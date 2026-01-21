@@ -152,6 +152,7 @@ const api: ElectronAPI = {
     authType?: AuthType
     workspace?: { name: string; iconUrl?: string; mcpUrl?: string }
     credential?: string
+    baseUrl?: string
     mcpCredentials?: { accessToken: string; clientId?: string }
   }) => ipcRenderer.invoke(IPC_CHANNELS.ONBOARDING_SAVE_CONFIG, config),
   // Claude OAuth
@@ -166,8 +167,8 @@ const api: ElectronAPI = {
 
   // Settings - Billing
   getBillingMethod: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_BILLING_METHOD),
-  updateBillingMethod: (authType: AuthType, credential?: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, authType, credential),
+  updateBillingMethod: (authType: AuthType, credential?: string, baseUrl?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, authType, credential, baseUrl),
 
   // Settings - Model (global default)
   getModel: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_MODEL),

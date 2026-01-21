@@ -6,6 +6,7 @@
  *
  * Supported variables (in priority order):
  *   CRAFT_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY - Anthropic API key
+ *   CRAFT_ANTHROPIC_BASE_URL or ANTHROPIC_BASE_URL - Anthropic API base URL
  *   CRAFT_CLAUDE_OAUTH_TOKEN - Claude OAuth token
  *
  * Note: Workspace and agent-scoped credentials are not supported
@@ -18,6 +19,7 @@ import type { CredentialId, StoredCredential } from '../types.ts';
 // Maps credential type to env var names (in priority order - first found wins)
 const ENV_MAP: Record<string, string[]> = {
   anthropic_api_key: ['CRAFT_ANTHROPIC_API_KEY', 'ANTHROPIC_API_KEY'],
+  anthropic_base_url: ['CRAFT_ANTHROPIC_BASE_URL', 'ANTHROPIC_BASE_URL'],
   claude_oauth: ['CRAFT_CLAUDE_OAUTH_TOKEN'],
 };
 

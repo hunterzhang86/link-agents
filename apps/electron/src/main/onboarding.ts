@@ -82,6 +82,7 @@ export function registerOnboardingHandlers(sessionManager: SessionManager): void
     authType?: AuthType  // Optional - if not provided, preserves existing auth type
     workspace?: { name: string; iconUrl?: string; mcpUrl?: string }  // Optional - if not provided, only updates billing
     credential?: string
+    baseUrl?: string
     mcpCredentials?: { accessToken: string; clientId?: string }
   }): Promise<OnboardingSaveResult> => {
     mainLog.info('[Onboarding:Main] ONBOARDING_SAVE_CONFIG received', {
@@ -91,6 +92,7 @@ export function registerOnboardingHandlers(sessionManager: SessionManager): void
       mcpUrl: config.workspace?.mcpUrl,
       hasCredential: !!config.credential,
       credentialLength: config.credential?.length,
+      hasBaseUrl: !!config.baseUrl,
       hasMcpCredentials: !!config.mcpCredentials,
     })
 
@@ -104,6 +106,16 @@ export function registerOnboardingHandlers(sessionManager: SessionManager): void
           mainLog.info('[Onboarding:Main] Calling manager.setApiKey...')
           await manager.setApiKey(config.credential)
           mainLog.info('[Onboarding:Main] API key saved successfully')
+
+          // Save baseUrl if provided, otherwise delete it
+          if (config.baseUrl && config.baseUrl.trim()) {
+            mainLog.info('[Onboarding:Main] Saving base URL:', config.baseUrl)
+            await manager.setBaseUrl(config.baseUrl.trim())
+            mainLog.info('[Onboarding:Main] Base URL saved successfully')
+          } else {
+            mainLog.info('[Onboarding:Main] Deleting base URL (not provided or empty)')
+            await manager.deleteBaseUrl()
+          }
         } else if (config.authType === 'oauth_token') {
           mainLog.info('[Onboarding:Main] Importing full Claude OAuth credentials...')
           // Import full credentials including refresh token and expiry from Claude CLI

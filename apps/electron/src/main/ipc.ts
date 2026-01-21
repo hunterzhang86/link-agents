@@ -842,7 +842,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   })
 
   // Update billing method and credential
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, async (_event, authType: AuthType, credential?: string) => {
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, async (_event, authType: AuthType, credential?: string, baseUrl?: string) => {
     const manager = getCredentialManager()
 
     // Clear old credentials when switching auth types
@@ -850,6 +850,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     if (oldAuthType !== authType) {
       if (oldAuthType === 'api_key') {
         await manager.delete({ type: 'anthropic_api_key' })
+        await manager.deleteBaseUrl()
       } else if (oldAuthType === 'oauth_token') {
         await manager.delete({ type: 'claude_oauth' })
       }
@@ -862,6 +863,12 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     if (credential) {
       if (authType === 'api_key') {
         await manager.setApiKey(credential)
+        // Store baseUrl if provided, otherwise delete it
+        if (baseUrl && baseUrl.trim()) {
+          await manager.setBaseUrl(baseUrl.trim())
+        } else {
+          await manager.deleteBaseUrl()
+        }
       } else if (authType === 'oauth_token') {
         // Import full credentials including refresh token and expiry from Claude CLI
         const { getExistingClaudeCredentials } = await import('@craft-agent/shared/auth')

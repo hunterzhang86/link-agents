@@ -190,6 +190,22 @@ export class CredentialManager {
     await this.set({ type: 'anthropic_api_key' }, { value: key });
   }
 
+  /** Get Anthropic Base URL */
+  async getBaseUrl(): Promise<string | null> {
+    const cred = await this.get({ type: 'anthropic_base_url' });
+    return cred?.value || null;
+  }
+
+  /** Set Anthropic Base URL */
+  async setBaseUrl(url: string): Promise<void> {
+    await this.set({ type: 'anthropic_base_url' }, { value: url });
+  }
+
+  /** Delete Anthropic Base URL */
+  async deleteBaseUrl(): Promise<boolean> {
+    return await this.delete({ type: 'anthropic_base_url' });
+  }
+
   /** Get Claude OAuth token */
   async getClaudeOAuth(): Promise<string | null> {
     const cred = await this.get({ type: 'claude_oauth' });

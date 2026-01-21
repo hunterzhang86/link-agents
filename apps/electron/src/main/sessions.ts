@@ -494,12 +494,19 @@ export class SessionManager {
         // Use Claude Max subscription via OAuth token
         process.env.CLAUDE_CODE_OAUTH_TOKEN = billing.claudeOAuthToken
         delete process.env.ANTHROPIC_API_KEY
+        delete process.env.ANTHROPIC_BASE_URL
         sessionLog.info('Set Claude Max OAuth Token')
       } else if (billing.apiKey) {
         // Use API key (pay-as-you-go)
         process.env.ANTHROPIC_API_KEY = billing.apiKey
         delete process.env.CLAUDE_CODE_OAUTH_TOKEN
-        sessionLog.info('Set Anthropic API Key')
+        if (billing.baseUrl) {
+          process.env.ANTHROPIC_BASE_URL = billing.baseUrl
+          sessionLog.info('Set Anthropic API Key and Base URL')
+        } else {
+          delete process.env.ANTHROPIC_BASE_URL
+          sessionLog.info('Set Anthropic API Key')
+        }
       } else {
         sessionLog.error('No authentication configured!')
       }
