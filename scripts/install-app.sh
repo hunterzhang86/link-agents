@@ -2,7 +2,8 @@
 
 set -e
 
-GITHUB_REPO="${CRAFT_GITHUB_REPO:-hunterzhang86/link-agents}"
+DEFAULT_GITHUB_REPO="${CRAFT_DEFAULT_GITHUB_REPO:-hunterzhang86/link-agents}"
+GITHUB_REPO="${CRAFT_GITHUB_REPO:-}"
 GITHUB_API_BASE="${CRAFT_GITHUB_API_BASE:-https://api.github.com}"
 GITHUB_RELEASE_TAG="${CRAFT_RELEASE_TAG:-}"
 REQUIRE_CHECKSUM="${CRAFT_REQUIRE_CHECKSUM:-false}"
@@ -94,6 +95,28 @@ github_api_request() {
     fi
 }
 
+# Try to infer repo from git remote when running inside a clone
+if [ -z "$GITHUB_REPO" ] && command -v git >/dev/null 2>&1; then
+    origin_url=$(git config --get remote.origin.url 2>/dev/null || true)
+    if [[ $origin_url =~ github\.com[:/](.+/.+?)(\.git)?$ ]]; then
+        GITHUB_REPO="${BASH_REMATCH[1]}"
+    fi
+fi
+
+# Try to infer repo from script URL when downloaded via curl/wget
+if [ -z "$GITHUB_REPO" ]; then
+    # Check if script was downloaded from raw.githubusercontent.com
+    # This works when script is piped: curl ... | bash
+    # We check the parent process command line
+    if [ -n "${SCRIPT_SOURCE_URL:-}" ]; then
+        if [[ $SCRIPT_SOURCE_URL =~ raw\.githubusercontent\.com/(.+?)/.+?/scripts/install-app\.sh ]]; then
+            GITHUB_REPO="${BASH_REMATCH[1]}"
+        fi
+    fi
+fi
+
+GITHUB_REPO="${GITHUB_REPO:-$DEFAULT_GITHUB_REPO}"
+
 # Simple JSON parser for extracting values when jq is not available
 get_json_value() {
     local json="$1"
@@ -149,11 +172,32 @@ else
     release_url="$GITHUB_API_BASE/repos/$GITHUB_REPO/releases/latest"
 fi
 
-release_json=$(github_api_request "$release_url")
+if ! release_json=$(github_api_request "$release_url" 2>&1); then
+    http_code=""
+    if [ "$DOWNLOADER" = "curl" ]; then
+        http_code=$(echo "$release_json" | grep -oP 'HTTP/\d\.\d \K\d+' | tail -1 || echo "")
+    fi
+    if [ "$http_code" = "404" ]; then
+        error "No releases found for $GITHUB_REPO.\n  This repository may not have any releases yet.\n  Set CRAFT_GITHUB_REPO to use a different repository, or create a release first."
+    else
+        error "Failed to fetch release from $GITHUB_REPO.\n  Set CRAFT_GITHUB_REPO or GITHUB_TOKEN if needed.\n  Error: $release_json"
+    fi
+fi
 if [ "$HAS_JQ" = true ]; then
     tag_name=$(echo "$release_json" | jq -r '.tag_name // empty')
+    if [ -z "$tag_name" ] || [ "$tag_name" = "null" ]; then
+        # Check if it's a 404 error
+        message=$(echo "$release_json" | jq -r '.message // empty' 2>/dev/null || echo "")
+        if [ "$message" = "Not Found" ]; then
+            error "No releases found for $GITHUB_REPO.\n  This repository may not have any releases yet.\n  Set CRAFT_GITHUB_REPO to use a different repository, or create a release first."
+        fi
+    fi
 else
     tag_name=$(get_json_value "$release_json" "tag_name")
+    # Check for 404 error message
+    if echo "$release_json" | grep -q '"message".*"Not Found"'; then
+        error "No releases found for $GITHUB_REPO.\n  This repository may not have any releases yet.\n  Set CRAFT_GITHUB_REPO to use a different repository, or create a release first."
+    fi
 fi
 
 if [ -z "$tag_name" ]; then

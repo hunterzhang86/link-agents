@@ -21,19 +21,19 @@ We built Craft Agents because we wanted a better, more opinionated (and preferab
 
 **macOS / Linux:**
 ```bash
-curl -fsSL https://agents.craft.do/install-app.sh | bash
+curl -fsSL https://raw.githubusercontent.com/hunterzhang86/link-agents/main/scripts/install-app.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://agents.craft.do/install-app.ps1 | iex
+irm https://raw.githubusercontent.com/hunterzhang86/link-agents/main/scripts/install-app.ps1 | iex
 ```
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/lukilabs/craft-agents-oss.git
-cd craft-agents-oss
+git clone https://github.com/hunterzhang86/link-agents.git
+cd link-agents
 bun install
 bun run electron:start
 ```

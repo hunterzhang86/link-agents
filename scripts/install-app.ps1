@@ -3,7 +3,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$GitHubRepo = if ($env:CRAFT_GITHUB_REPO) { $env:CRAFT_GITHUB_REPO } else { "hunterzhang86/link-agents" }
+$DefaultGitHubRepo = if ($env:CRAFT_DEFAULT_GITHUB_REPO) { $env:CRAFT_DEFAULT_GITHUB_REPO } else { "hunterzhang86/link-agents" }
+$GitHubRepo = $env:CRAFT_GITHUB_REPO
 $GitHubApiBase = if ($env:CRAFT_GITHUB_API_BASE) { $env:CRAFT_GITHUB_API_BASE } else { "https://api.github.com" }
 $ReleaseTagOverride = $env:CRAFT_RELEASE_TAG
 $RequireChecksum = $env:CRAFT_REQUIRE_CHECKSUM -eq "true"
@@ -19,6 +20,21 @@ function Write-Err { Write-Host "x $args" -ForegroundColor Red; exit 1 }
 # Check for Windows
 if ($env:OS -ne "Windows_NT") {
     Write-Err "This installer is for Windows only."
+}
+
+# Try to infer repo from git remote when running inside a clone
+if (-not $GitHubRepo) {
+    $git = Get-Command git -ErrorAction SilentlyContinue
+    if ($git) {
+        $origin = git config --get remote.origin.url 2>$null
+        if ($origin -and $origin -match 'github\.com[:/](.+?/.+?)(\.git)?$') {
+            $GitHubRepo = $Matches[1]
+        }
+    }
+}
+
+if (-not $GitHubRepo) {
+    $GitHubRepo = $DefaultGitHubRepo
 }
 
 # Detect architecture (Windows installer is x64 only)
@@ -54,7 +70,7 @@ try {
     $release = Invoke-RestMethod -Uri $releaseUrl -Headers $headers -UseBasicParsing
     $tag = $release.tag_name
 } catch {
-    Write-Err "Failed to fetch GitHub release: $_"
+    Write-Err "Failed to fetch GitHub release from $GitHubRepo. Set CRAFT_GITHUB_REPO or GITHUB_TOKEN if needed. $_"
 }
 
 if (-not $tag) {
