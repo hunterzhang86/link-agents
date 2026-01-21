@@ -55,7 +55,7 @@ jobs:
           path: dist/Craft-Agents-*-mac-arm64.dmg
 
   mac_x64:
-    runs-on: macos-13
+    runs-on: macos-14-large
     steps:
       - name: Checkout
         uses: actions/checkout@v4
