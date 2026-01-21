@@ -42,6 +42,8 @@ export interface SessionMeta {
   isAsyncOperationOngoing?: boolean
   /** @deprecated Use isAsyncOperationOngoing instead */
   isRegeneratingTitle?: boolean
+  /** SDK session ID (for Claude Code imported sessions) */
+  sdkSessionId?: string
 }
 
 /**
@@ -83,6 +85,7 @@ export function extractSessionMeta(session: Session): SessionMeta {
     // Use isAsyncOperationOngoing if available, fall back to deprecated isRegeneratingTitle
     isAsyncOperationOngoing: session.isAsyncOperationOngoing ?? session.isRegeneratingTitle,
     isRegeneratingTitle: session.isRegeneratingTitle,
+    sdkSessionId: session.sdkSessionId,
   }
 }
 

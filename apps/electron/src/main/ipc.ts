@@ -1584,6 +1584,99 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   })
 
   // ============================================================
+  // Claude Code Sessions
+  // ============================================================
+
+  // Get all Claude Code sessions from ~/.claude/
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CODE_GET_SESSIONS, async () => {
+    try {
+      const { ClaudeCodeSessionReader } = await import('@craft-agent/shared/sessions')
+      const reader = new ClaudeCodeSessionReader()
+      const sessions = await reader.listSessions()
+      ipcLog.info(`CLAUDE_CODE_GET_SESSIONS: Found ${sessions.length} sessions`)
+      return sessions
+    } catch (error) {
+      ipcLog.error('CLAUDE_CODE_GET_SESSIONS: Error loading sessions:', error)
+      return []
+    }
+  })
+
+  // Import a Claude Code session into Craft Agents
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CODE_IMPORT_SESSION, async (_event, sessionId: string, workspaceRootPath: string) => {
+    try {
+      const { ClaudeCodeSessionReader, ClaudeCodeConverter, saveSession } = await import('@craft-agent/shared/sessions')
+
+      // Load full session
+      const reader = new ClaudeCodeSessionReader()
+      const session = await reader.loadSession(sessionId)
+
+      if (!session) {
+        throw new Error('Session not found')
+      }
+
+      // Convert to Craft format
+      const converter = new ClaudeCodeConverter()
+      const craftSession = converter.convertSession(session, workspaceRootPath)
+
+      // Save to Craft
+      await saveSession(craftSession)
+
+      // Notify SessionManager to reload sessions
+      sessionManager.reloadSessions()
+
+      ipcLog.info(`CLAUDE_CODE_IMPORT_SESSION: Imported session ${sessionId} as ${craftSession.id}`)
+
+      return { success: true, sessionId: craftSession.id }
+    } catch (error) {
+      ipcLog.error('CLAUDE_CODE_IMPORT_SESSION: Error importing session:', error)
+      throw error
+    }
+  })
+
+  // Export a Craft Agents session back to Claude Code
+  ipcMain.handle(IPC_CHANNELS.CLAUDE_CODE_EXPORT_SESSION, async (_event, sessionId: string, projectName?: string) => {
+    try {
+      const { ClaudeCodeWriter } = await import('@craft-agent/shared/sessions')
+      const fs = await import('fs')
+      const path = await import('path')
+
+      // Get session path from sessionManager
+      const sessionPath = sessionManager.getSessionPath(sessionId)
+      if (!sessionPath) {
+        throw new Error('Session not found')
+      }
+
+      // Read session.jsonl file directly
+      const sessionFilePath = path.join(sessionPath, 'session.jsonl')
+      const fileContent = await fs.promises.readFile(sessionFilePath, 'utf-8')
+      const lines = fileContent.trim().split('\n')
+
+      // Parse session header (first line)
+      const sessionHeader = JSON.parse(lines[0])
+
+      // Parse messages (remaining lines)
+      const messages = lines.slice(1).map(line => JSON.parse(line))
+
+      // Construct full session object
+      const session = {
+        ...sessionHeader,
+        messages,
+      }
+
+      // Export to Claude Code format
+      const writer = new ClaudeCodeWriter()
+      const { claudeSessionId, projectPath, claudeProjectDir } = await writer.exportSession(session, projectName)
+
+      ipcLog.info(`CLAUDE_CODE_EXPORT_SESSION: Exported session ${sessionId} to ${claudeProjectDir} (project: ${projectPath})`)
+
+      return { success: true, claudeSessionId, projectPath, claudeProjectDir }
+    } catch (error) {
+      ipcLog.error('CLAUDE_CODE_EXPORT_SESSION: Error exporting session:', error)
+      throw error
+    }
+  })
+
+  // ============================================================
   // Status Management (Workspace-scoped)
   // ============================================================
 

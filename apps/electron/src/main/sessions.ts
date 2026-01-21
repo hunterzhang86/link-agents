@@ -548,7 +548,7 @@ export class SessionManager {
     }
 
     // In packaged app: use bundled Bun binary
-    // In development: use system 'bun' command (or 'node' on Windows where bun may crash)
+    // In development: use 'node' command (bun may not be installed)
     if (app.isPackaged) {
       // Use platform-specific binary name (bun.exe on Windows, bun on macOS/Linux)
       const bunBinary = process.platform === 'win32' ? 'bun.exe' : 'bun'
@@ -563,10 +563,9 @@ export class SessionManager {
       }
       sessionLog.info('Setting executable:', bunPath)
       setExecutable(bunPath)
-    } else if (process.platform === 'win32') {
-      // On Windows in development, use 'node' instead of 'bun' as bun may crash
-      // due to architecture emulation issues (e.g., x64 bun on ARM64 Windows)
-      sessionLog.info('Using node executable for Windows development')
+    } else {
+      // In development, use 'node' instead of 'bun' (bun may not be installed)
+      sessionLog.info('Using node executable for development')
       setExecutable('node')
     }
 

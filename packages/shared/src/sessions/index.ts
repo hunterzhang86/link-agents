@@ -88,4 +88,20 @@ export {
 // Word lists (for customization if needed)
 export { ADJECTIVES, NOUNS } from './word-lists.ts';
 
+// Claude Code integration
+export type {
+  ClaudeCodeContentBlock,
+  ClaudeCodeMessage,
+  ClaudeCodeTranscriptLine,
+  ClaudeCodeHistoryEntry,
+  ClaudeCodeSessionMetadata,
+  ClaudeCodeSession,
+  SessionChangeEventType,
+  SessionChangeEvent,
+} from './claude-code-types.ts';
+
+export { ClaudeCodeSessionReader } from './claude-code-reader.ts';
+export { ClaudeCodeConverter } from './claude-code-converter.ts';
+export { ClaudeCodeSessionWatcher } from './claude-code-watcher.ts';
+export { ClaudeCodeWriter } from './claude-code-writer.ts';
 

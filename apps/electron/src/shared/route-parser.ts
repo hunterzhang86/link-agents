@@ -33,7 +33,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'chats' | 'sources' | 'skills' | 'settings'
+export type NavigatorType = 'chats' | 'sources' | 'skills' | 'settings' | 'claudeCode'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -55,7 +55,7 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allChats', 'flagged', 'state', 'sources', 'skills', 'settings'
+  'allChats', 'flagged', 'state', 'sources', 'skills', 'settings', 'claudeCode'
 ]
 
 /**
@@ -129,6 +129,23 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return null
   }
 
+  // Claude Code navigator
+  if (first === 'claudeCode') {
+    if (segments.length === 1) {
+      return { navigator: 'claudeCode', details: null }
+    }
+
+    // claudeCode/session/{sessionId}
+    if (segments[1] === 'session' && segments[2]) {
+      return {
+        navigator: 'claudeCode',
+        details: { type: 'claudeCodeSession', id: segments[2] },
+      }
+    }
+
+    return null
+  }
+
   // Chats navigator (allChats, flagged, state)
   let chatFilter: ChatFilter
   let detailsStartIndex: number
@@ -189,6 +206,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   if (parsed.navigator === 'skills') {
     if (!parsed.details) return 'skills'
     return `skills/skill/${parsed.details.id}`
+  }
+
+  if (parsed.navigator === 'claudeCode') {
+    if (!parsed.details) return 'claudeCode'
+    return `claudeCode/session/${parsed.details.id}`
   }
 
   // Chats navigator
@@ -404,6 +426,17 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return {
       navigator: 'skills',
       details: { type: 'skill', skillSlug: compound.details.id },
+    }
+  }
+
+  // Claude Code
+  if (compound.navigator === 'claudeCode') {
+    if (!compound.details) {
+      return { navigator: 'claudeCode', details: null }
+    }
+    return {
+      navigator: 'claudeCode',
+      details: { type: 'claudeCodeSession', sessionId: compound.details.id },
     }
   }
 

@@ -260,6 +260,8 @@ export interface Session {
   isProcessing: boolean
   // Session metadata
   isFlagged?: boolean
+  // SDK session ID (for Claude Code imported sessions)
+  sdkSessionId?: string
   // Advanced options (persisted per session)
   /** Permission mode for this session ('safe', 'ask', 'allow-all') */
   permissionMode?: PermissionMode
@@ -580,6 +582,11 @@ export const IPC_CHANNELS = {
   SKILLS_OPEN_FINDER: 'skills:openFinder',
   SKILLS_CHANGED: 'skills:changed',
 
+  // Claude Code sessions
+  CLAUDE_CODE_GET_SESSIONS: 'claudeCode:getSessions',
+  CLAUDE_CODE_IMPORT_SESSION: 'claudeCode:importSession',
+  CLAUDE_CODE_EXPORT_SESSION: 'claudeCode:exportSession',
+
   // Status management (workspace-scoped)
   STATUSES_LIST: 'statuses:list',
   STATUSES_CHANGED: 'statuses:changed',  // Broadcast event
@@ -792,6 +799,23 @@ export interface ElectronAPI {
   // Skills change listener (live updates when skills are added/removed/modified)
   onSkillsChanged(callback: (skills: LoadedSkill[]) => void): () => void
 
+  // Claude Code sessions
+  getClaudeCodeSessions(): Promise<Array<{
+    id: string
+    sessionId: string
+    preview: string
+    project: string
+    messageCount: number
+    lastUsedAt: string
+    tokenUsage?: {
+      inputTokens: number
+      outputTokens: number
+      cacheReadTokens: number
+    }
+  }>>
+  importClaudeCodeSession(sessionId: string, workspaceRootPath: string): Promise<{ success: boolean; sessionId: string }>
+  exportToClaudeCode(sessionId: string, projectName?: string): Promise<{ success: boolean; claudeSessionId: string; projectPath?: string; claudeProjectDir?: string }>
+
   // Statuses (workspace-scoped)
   listStatuses(workspaceId: string): Promise<import('@craft-agent/shared/statuses').StatusConfig[]>
   // Statuses change listener (live updates when statuses config or icon files change)
@@ -975,6 +999,17 @@ export interface SkillsNavigationState {
 }
 
 /**
+ * Claude Code navigation state - shows Claude Code sessions from Happy
+ */
+export interface ClaudeCodeNavigationState {
+  navigator: 'claudeCode'
+  /** Selected session details, or null for list view */
+  details: { type: 'claudeCodeSession'; sessionId: string } | null
+  /** Optional right sidebar panel state */
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Unified navigation state - single source of truth for all 3 panels
  *
  * From this state we can derive:
@@ -987,6 +1022,7 @@ export type NavigationState =
   | SourcesNavigationState
   | SettingsNavigationState
   | SkillsNavigationState
+  | ClaudeCodeNavigationState
 
 /**
  * Type guard to check if state is chats navigation
@@ -1017,6 +1053,13 @@ export const isSkillsNavigation = (
 ): state is SkillsNavigationState => state.navigator === 'skills'
 
 /**
+ * Type guard to check if state is Claude Code navigation
+ */
+export const isClaudeCodeNavigation = (
+  state: NavigationState
+): state is ClaudeCodeNavigationState => state.navigator === 'claudeCode'
+
+/**
  * Default navigation state - allChats with no selection
  */
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
@@ -1040,6 +1083,12 @@ export const getNavigationStateKey = (state: NavigationState): string => {
       return `skills/skill/${state.details.skillSlug}`
     }
     return 'skills'
+  }
+  if (state.navigator === 'claudeCode') {
+    if (state.details) {
+      return `claudeCode/session/${state.details.sessionId}`
+    }
+    return 'claudeCode'
   }
   if (state.navigator === 'settings') {
     return `settings:${state.subpage}`

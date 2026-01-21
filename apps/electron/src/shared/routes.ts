@@ -116,6 +116,12 @@ export const routes = {
         ? `skills/skill/${skillSlug}` as const
         : 'skills' as const,
 
+    /** Claude Code sessions view (claudeCode navigator) */
+    claudeCode: (sessionId?: string) =>
+      sessionId
+        ? `claudeCode/session/${sessionId}` as const
+        : 'claudeCode' as const,
+
     /** Settings view (settings navigator) */
     settings: (subpage?: 'app' | 'workspace' | 'permissions' | 'shortcuts' | 'preferences') =>
       subpage && subpage !== 'app'

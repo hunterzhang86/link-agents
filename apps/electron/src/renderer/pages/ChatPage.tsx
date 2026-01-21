@@ -259,6 +259,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       hasUnreadMessages={hasUnreadMessages}
       currentTodoState={currentTodoState}
       todoStates={todoStates ?? []}
+      sdkSessionId={session?.sdkSessionId}
       onRename={handleRename}
       onFlag={handleFlag}
       onUnflag={handleUnflag}
@@ -276,6 +277,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     hasUnreadMessages,
     currentTodoState,
     todoStates,
+    session?.sdkSessionId,
     handleRename,
     handleFlag,
     handleUnflag,

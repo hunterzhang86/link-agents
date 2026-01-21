@@ -281,6 +281,14 @@ const api: ElectronAPI = {
     }
   },
 
+  // Claude Code sessions
+  getClaudeCodeSessions: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_CODE_GET_SESSIONS),
+  importClaudeCodeSession: (sessionId: string, workspaceRootPath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_CODE_IMPORT_SESSION, sessionId, workspaceRootPath),
+  exportToClaudeCode: (sessionId: string, projectName?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CLAUDE_CODE_EXPORT_SESSION, sessionId, projectName),
+
   // Statuses change listener (live updates when statuses config or icon files change)
   onStatusesChanged: (callback: (workspaceId: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, workspaceId: string) => {

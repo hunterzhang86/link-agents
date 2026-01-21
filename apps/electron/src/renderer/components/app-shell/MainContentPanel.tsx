@@ -23,6 +23,7 @@ import {
   isSourcesNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
+  isClaudeCodeNavigation,
 } from '@/contexts/NavigationContext'
 import { AppSettingsPage, WorkspaceSettingsPage, PermissionsSettingsPage, PreferencesPage, ShortcutsPage, SourceInfoPage, ChatPage } from '@/pages'
 import SkillInfoPage from '@/pages/SkillInfoPage'
@@ -127,6 +128,11 @@ export function MainContentPanel({
         </div>
       </Panel>
     )
+  }
+
+  // Claude Code navigator - don't show main content panel (only show list in navigator)
+  if (isClaudeCodeNavigation(navState)) {
+    return null
   }
 
   // Chats navigator - show chat or empty state

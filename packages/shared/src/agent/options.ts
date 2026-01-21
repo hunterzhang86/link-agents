@@ -1,6 +1,6 @@
 import type { Options } from "@anthropic-ai/claude-agent-sdk";
-import { join, dirname } from "path";
 import { homedir } from "os";
+import { join } from "path";
 import { debug } from "../utils/debug";
 
 declare const CRAFT_AGENT_CLI_VERSION: string | undefined;
@@ -41,10 +41,11 @@ export function setExecutable(path: string) {
 export function getDefaultOptions(): Partial<Options> {
     // If custom path is set (e.g., for Electron), use it with minimal options
     if (customPathToClaudeCodeExecutable) {
+        const executable = (customExecutable || 'bun') as 'bun' | 'node';
         const options: Partial<Options> = {
             pathToClaudeCodeExecutable: customPathToClaudeCodeExecutable,
             // Use custom executable if set, otherwise default to 'bun'
-            executable: (customExecutable || 'bun') as 'bun',
+            executable,
             env: {
                 ...process.env,
                 ... optionsEnv,
@@ -54,7 +55,12 @@ export function getDefaultOptions(): Partial<Options> {
         };
         // Add interceptor preload if path is set (needed for cache TTL patching)
         if (customInterceptorPath) {
-            options.executableArgs = ['--preload', customInterceptorPath];
+            if (executable === 'node') {
+                // Node does not support --preload (bun-only), so skip instead of failing
+                debug('Skipping interceptor preload because node executable does not support --preload');
+            } else {
+                options.executableArgs = ['--preload', customInterceptorPath];
+            }
         }
         return options;
     }

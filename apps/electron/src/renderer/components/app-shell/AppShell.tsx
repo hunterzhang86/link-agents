@@ -18,6 +18,7 @@ import {
   DatabaseZap,
   Zap,
   Inbox,
+  Download,
 } from "lucide-react"
 import { PanelRightRounded } from "../icons/PanelRightRounded"
 import { PanelLeftRounded } from "../icons/PanelLeftRounded"
@@ -86,8 +87,10 @@ import {
   type ChatFilter,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
+import { isClaudeCodeNavigation } from "../../../shared/types"
 import { SourcesListPanel } from "./SourcesListPanel"
 import { SkillsListPanel } from "./SkillsListPanel"
+import { ClaudeCodeListPanel } from "./ClaudeCodeListPanel"
 import { PanelHeader } from "./PanelHeader"
 import { EditPopover, getEditConfig } from "@/components/ui/EditPopover"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
@@ -777,6 +780,11 @@ function AppShellContent({
     navigate(routes.view.skills())
   }, [])
 
+  // Handler for Claude Code view
+  const handleClaudeCodeClick = useCallback(() => {
+    navigate(routes.view.claudeCode())
+  }, [])
+
   // Handler for settings view
   const handleSettingsClick = useCallback((subpage: SettingsSubpage = 'app') => {
     navigate(routes.view.settings(subpage))
@@ -877,11 +885,14 @@ function AppShellContent({
     // 2.6. Skills nav item
     result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
 
-    // 2.7. Settings nav item
+    // 2.7. Claude Code nav item
+    result.push({ id: 'nav:claudeCode', type: 'nav', action: handleClaudeCodeClick })
+
+    // 2.8. Settings nav item
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick('app') })
 
     return result
-  }, [handleAllChatsClick, handleFlaggedClick, handleTodoStateClick, todoStates, handleSourcesClick, handleSkillsClick, handleSettingsClick])
+  }, [handleAllChatsClick, handleFlaggedClick, handleTodoStateClick, todoStates, handleSourcesClick, handleSkillsClick, handleClaudeCodeClick, handleSettingsClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -998,6 +1009,11 @@ function AppShellContent({
     // Skills navigator
     if (isSkillsNavigation(navState)) {
       return 'All Skills'
+    }
+
+    // Claude Code navigator
+    if (isClaudeCodeNavigation(navState)) {
+      return 'Import Session'
     }
 
     // Settings navigator
@@ -1181,6 +1197,13 @@ function AppShellContent({
                         onAddSkill: openAddSkill,
                       },
                     },
+                    {
+                      id: "nav:claudeCode",
+                      title: "Import Session",
+                      icon: Download,
+                      variant: isClaudeCodeNavigation(navState) ? "default" : "ghost",
+                      onClick: handleClaudeCodeClick,
+                    },
                     { id: "separator:skills-settings", type: "separator" },
                     {
                       id: "nav:settings",
@@ -1246,8 +1269,11 @@ function AppShellContent({
           {/* === SESSION LIST PANEL === (hidden in focused mode) */}
           {!isFocusedMode && (
           <div
-            className="h-full flex flex-col min-w-0 bg-background shrink-0 shadow-middle overflow-hidden rounded-l-[14px] rounded-r-[10px]"
-            style={{ width: sessionListWidth }}
+            className={cn(
+              "h-full flex flex-col min-w-0 bg-background shadow-middle overflow-hidden rounded-l-[14px] rounded-r-[10px]",
+              isClaudeCodeNavigation(navState) ? "flex-1" : "shrink-0"
+            )}
+            style={isClaudeCodeNavigation(navState) ? undefined : { width: sessionListWidth }}
           >
             <PanelHeader
               title={isSidebarVisible ? listTitle : undefined}
@@ -1392,6 +1418,20 @@ function AppShellContent({
                 selectedSkillSlug={isSkillsNavigation(navState) && navState.details ? navState.details.skillSlug : null}
               />
             )}
+            {isClaudeCodeNavigation(navState) && activeWorkspace && (
+              /* Claude Code Sessions List */
+              <ClaudeCodeListPanel
+                workspaceRootPath={activeWorkspace.rootPath}
+                onSessionClick={(sessionId) => {
+                  navigate(routes.view.claudeCode(sessionId))
+                }}
+                selectedSessionId={
+                  isClaudeCodeNavigation(navState) && navState.details
+                    ? navState.details.sessionId
+                    : null
+                }
+              />
+            )}
             {isSettingsNavigation(navState) && (
               /* Settings Navigator */
               <SettingsNavigator
@@ -1475,13 +1515,15 @@ function AppShellContent({
           </div>
           )}
 
-          {/* === MAIN CONTENT PANEL === */}
+          {/* === MAIN CONTENT PANEL === (hidden for Import Session view) */}
+          {!isClaudeCodeNavigation(navState) && (
           <div className={cn(
             "flex-1 overflow-hidden min-w-0 bg-foreground-2 shadow-middle",
             isFocusedMode ? "rounded-[14px]" : (isRightSidebarVisible ? "rounded-l-[10px] rounded-r-[10px]" : "rounded-l-[10px] rounded-r-[14px]")
           )}>
             <MainContentPanel isFocusedMode={isFocusedMode} />
           </div>
+          )}
 
           {/* Right Sidebar - Inline Mode (≥ 920px) */}
           {!isFocusedMode && !shouldUseOverlay && (

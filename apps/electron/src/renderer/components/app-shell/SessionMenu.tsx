@@ -33,6 +33,7 @@ import {
   CloudUpload,
   Globe,
   RefreshCw,
+  ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, isHexColor } from '@/lib/utils'
@@ -57,6 +58,8 @@ export interface SessionMenuProps {
   currentTodoState: TodoStateId
   /** Available todo states */
   todoStates: TodoState[]
+  /** SDK session ID (for Claude Code imported sessions) */
+  sdkSessionId?: string | null
   /** Callbacks */
   onRename: () => void
   onFlag: () => void
@@ -80,6 +83,7 @@ export function SessionMenu({
   hasUnreadMessages,
   currentTodoState,
   todoStates,
+  sdkSessionId,
   onRename,
   onFlag,
   onUnflag,
@@ -152,6 +156,28 @@ export function SessionMenu({
       toast.success('Title refreshed', { description: result.title })
     } else {
       toast.error('Failed to refresh title', { description: result?.error || 'Unknown error' })
+    }
+  }
+
+  const handleExportToClaudeCode = async () => {
+    try {
+      const result = await window.electronAPI.exportToClaudeCode(sessionId)
+      if (result.success) {
+        const resumeCommand = result.projectPath
+          ? `cd ${JSON.stringify(result.projectPath)}\nclaude --resume ${result.claudeSessionId}`
+          : `claude --resume ${result.claudeSessionId}`
+        toast.success('Synced to Claude Code', {
+          description: result.projectPath ? `Project: ${result.projectPath}` : 'Claude Code',
+          action: {
+            label: 'Copy Resume Cmd',
+            onClick: () => navigator.clipboard.writeText(resumeCommand),
+          },
+        })
+      }
+    } catch (error) {
+      toast.error('Failed to sync', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      })
     }
   }
 
@@ -297,6 +323,12 @@ export function SessionMenu({
       <MenuItem onClick={handleCopyPath}>
         <Copy className="h-3.5 w-3.5" />
         <span className="flex-1">Copy Path</span>
+      </MenuItem>
+
+      {/* Sync to Claude Code - available for all sessions */}
+      <MenuItem onClick={handleExportToClaudeCode}>
+        <ExternalLink className="h-3.5 w-3.5" />
+        <span className="flex-1">Sync to Claude Code</span>
       </MenuItem>
 
       <Separator />
