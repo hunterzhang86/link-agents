@@ -2,7 +2,10 @@
 
 set -e
 
-VERSIONS_URL="https://agents.craft.do/electron"
+GITHUB_REPO="${CRAFT_GITHUB_REPO:-hunterzhang86/link-agents}"
+GITHUB_API_BASE="${CRAFT_GITHUB_API_BASE:-https://api.github.com}"
+GITHUB_RELEASE_TAG="${CRAFT_RELEASE_TAG:-}"
+REQUIRE_CHECKSUM="${CRAFT_REQUIRE_CHECKSUM:-false}"
 DOWNLOAD_DIR="$HOME/.craft-agent/downloads"
 
 # Colors for output
@@ -74,6 +77,23 @@ download_file() {
     fi
 }
 
+github_api_request() {
+    local url="$1"
+    if [ "$DOWNLOADER" = "curl" ]; then
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+            curl -fsSL -H "Accept: application/vnd.github+json" -H "User-Agent: craft-agents-installer" -H "Authorization: Bearer $GITHUB_TOKEN" "$url"
+        else
+            curl -fsSL -H "Accept: application/vnd.github+json" -H "User-Agent: craft-agents-installer" "$url"
+        fi
+    else
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+            wget -q -O - --header="Accept: application/vnd.github+json" --header="User-Agent: craft-agents-installer" --header="Authorization: Bearer $GITHUB_TOKEN" "$url"
+        else
+            wget -q -O - --header="Accept: application/vnd.github+json" --header="User-Agent: craft-agents-installer" "$url"
+        fi
+    fi
+}
+
 # Simple JSON parser for extracting values when jq is not available
 get_json_value() {
     local json="$1"
@@ -91,23 +111,6 @@ get_json_value() {
     return 1
 }
 
-# Extract checksum from manifest for a specific platform
-get_checksum_from_manifest() {
-    local json="$1"
-    local platform="$2"
-
-    # Normalize JSON to single line
-    json=$(echo "$json" | tr -d '\n\r\t' | sed 's/ \+/ /g')
-
-    # Extract checksum for platform using bash regex
-    if [[ $json =~ \"$platform\"[^}]*\"sha256\"[[:space:]]*:[[:space:]]*\"([a-f0-9]{64})\" ]]; then
-        echo "${BASH_REMATCH[1]}"
-        return 0
-    fi
-
-    return 1
-}
-
 # Detect architecture
 case "$(uname -m)" in
     x86_64|amd64) arch="x64" ;;
@@ -117,7 +120,7 @@ esac
 
 # Set platform-specific variables
 if [ "$OS_TYPE" = "darwin" ]; then
-    platform="darwin-${arch}"
+    platform="mac-${arch}"
     APP_NAME="Craft Agent.app"
     INSTALL_DIR="/Applications"
     ext="dmg"
@@ -139,48 +142,29 @@ mkdir -p "$DOWNLOAD_DIR"
 mkdir -p "$INSTALL_DIR"
 
 # Get latest version
-info "Fetching latest version..."
-latest_json=$(download_file "$VERSIONS_URL/latest")
-
-if [ "$HAS_JQ" = true ]; then
-    version=$(echo "$latest_json" | jq -r '.version // empty')
+info "Fetching GitHub release info..."
+if [ -n "$GITHUB_RELEASE_TAG" ]; then
+    release_url="$GITHUB_API_BASE/repos/$GITHUB_REPO/releases/tags/$GITHUB_RELEASE_TAG"
 else
-    version=$(get_json_value "$latest_json" "version")
+    release_url="$GITHUB_API_BASE/repos/$GITHUB_REPO/releases/latest"
 fi
 
-if [ -z "$version" ]; then
-    error "Failed to get latest version"
-fi
-
-info "Latest version: $version"
-
-# Download manifest and extract checksum
-info "Fetching manifest..."
-manifest_json=$(download_file "$VERSIONS_URL/$version/manifest.json")
-
+release_json=$(github_api_request "$release_url")
 if [ "$HAS_JQ" = true ]; then
-    checksum=$(echo "$manifest_json" | jq -r ".binaries[\"$platform\"].sha256 // empty")
-    filename=$(echo "$manifest_json" | jq -r ".binaries[\"$platform\"].filename // empty")
+    tag_name=$(echo "$release_json" | jq -r '.tag_name // empty')
 else
-    checksum=$(get_checksum_from_manifest "$manifest_json" "$platform")
-    # Fallback filename if not using jq
-    filename="Craft-Agent-${arch}.${ext}"
+    tag_name=$(get_json_value "$release_json" "tag_name")
 fi
 
-# Validate checksum format (SHA256 = 64 hex characters)
-if [ -z "$checksum" ] || [[ ! "$checksum" =~ ^[a-f0-9]{64}$ ]]; then
-    error "Platform $platform not found in manifest"
+if [ -z "$tag_name" ]; then
+    error "Failed to get release tag from GitHub. Set GITHUB_TOKEN if rate-limited."
 fi
 
-# Use default filename if not in manifest
-if [ -z "$filename" ]; then
-    filename="Craft-Agent-${arch}.${ext}"
-fi
+version="${tag_name#v}"
+info "Latest version: $version (tag: $tag_name)"
 
-info "Expected checksum: ${checksum:0:16}..."
-
-# Download installer
-installer_url="$VERSIONS_URL/$version/$filename"
+filename="Craft-Agents-${version}-${platform}.${ext}"
+installer_url="https://github.com/$GITHUB_REPO/releases/download/$tag_name/$filename"
 installer_path="$DOWNLOAD_DIR/$filename"
 
 info "Downloading $filename..."
@@ -192,19 +176,35 @@ fi
 echo ""
 
 # Verify checksum
-info "Verifying checksum..."
-if [ "$OS_TYPE" = "darwin" ]; then
-    actual=$(shasum -a 256 "$installer_path" | cut -d' ' -f1)
+checksum=""
+checksum_url="${installer_url}.sha256"
+checksum_path="$DOWNLOAD_DIR/${filename}.sha256"
+
+if download_file "$checksum_url" "$checksum_path"; then
+    checksum=$(awk '{print $1}' "$checksum_path" | tr -d '\r\n')
+fi
+
+if [ -n "$checksum" ]; then
+    info "Verifying checksum..."
+    if [ "$OS_TYPE" = "darwin" ]; then
+        actual=$(shasum -a 256 "$installer_path" | cut -d' ' -f1)
+    else
+        actual=$(sha256sum "$installer_path" | cut -d' ' -f1)
+    fi
+
+    if [ "$actual" != "$checksum" ]; then
+        rm -f "$installer_path"
+        error "Checksum verification failed\n  Expected: $checksum\n  Actual:   $actual"
+    fi
+
+    success "Checksum verified!"
 else
-    actual=$(sha256sum "$installer_path" | cut -d' ' -f1)
+    if [ "$REQUIRE_CHECKSUM" = "true" ]; then
+        rm -f "$installer_path"
+        error "Checksum file not found for $filename"
+    fi
+    warn "Checksum file not found; skipping verification"
 fi
-
-if [ "$actual" != "$checksum" ]; then
-    rm -f "$installer_path"
-    error "Checksum verification failed\n  Expected: $checksum\n  Actual:   $actual"
-fi
-
-success "Checksum verified!"
 
 # Platform-specific installation
 if [ "$OS_TYPE" = "darwin" ]; then

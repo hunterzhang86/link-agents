@@ -3,7 +3,10 @@
 
 $ErrorActionPreference = "Stop"
 
-$VERSIONS_URL = "https://agents.craft.do/electron"
+$GitHubRepo = if ($env:CRAFT_GITHUB_REPO) { $env:CRAFT_GITHUB_REPO } else { "hunterzhang86/link-agents" }
+$GitHubApiBase = if ($env:CRAFT_GITHUB_API_BASE) { $env:CRAFT_GITHUB_API_BASE } else { "https://api.github.com" }
+$ReleaseTagOverride = $env:CRAFT_RELEASE_TAG
+$RequireChecksum = $env:CRAFT_REQUIRE_CHECKSUM -eq "true"
 $DOWNLOAD_DIR = "$env:TEMP\craft-agent-install"
 $APP_NAME = "Craft Agent"
 
@@ -18,9 +21,12 @@ if ($env:OS -ne "Windows_NT") {
     Write-Err "This installer is for Windows only."
 }
 
-# Detect architecture
+# Detect architecture (Windows installer is x64 only)
 $arch = if ([Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
-$platform = "win32-$arch"
+if ($arch -ne "x64") {
+    Write-Err "Windows installer is x64 only."
+}
+$platform = "win-$arch"
 
 Write-Host ""
 Write-Info "Detected platform: $platform"
@@ -28,62 +34,46 @@ Write-Info "Detected platform: $platform"
 # Create download directory
 New-Item -ItemType Directory -Force -Path $DOWNLOAD_DIR | Out-Null
 
-# Get latest version
-Write-Info "Fetching latest version..."
+# Get GitHub release info
+Write-Info "Fetching GitHub release info..."
+$headers = @{
+    "Accept" = "application/vnd.github+json"
+    "User-Agent" = "craft-agents-installer"
+}
+if ($env:GITHUB_TOKEN) {
+    $headers["Authorization"] = "Bearer $env:GITHUB_TOKEN"
+}
+
+$releaseUrl = if ($ReleaseTagOverride) {
+    "$GitHubApiBase/repos/$GitHubRepo/releases/tags/$ReleaseTagOverride"
+} else {
+    "$GitHubApiBase/repos/$GitHubRepo/releases/latest"
+}
+
 try {
-    $latestJson = Invoke-RestMethod -Uri "$VERSIONS_URL/latest" -UseBasicParsing
-    $version = $latestJson.version
+    $release = Invoke-RestMethod -Uri $releaseUrl -Headers $headers -UseBasicParsing
+    $tag = $release.tag_name
 } catch {
-    Write-Err "Failed to fetch latest version: $_"
+    Write-Err "Failed to fetch GitHub release: $_"
 }
 
-if (-not $version) {
-    Write-Err "Failed to get latest version"
+if (-not $tag) {
+    Write-Err "Failed to get release tag (set GITHUB_TOKEN if rate-limited)."
 }
 
-Write-Info "Latest version: $version"
+$version = $tag -replace '^v', ''
+Write-Info "Latest version: $version (tag: $tag)"
 
-# Download manifest and extract checksum
-Write-Info "Fetching manifest..."
-try {
-    $manifest = Invoke-RestMethod -Uri "$VERSIONS_URL/$version/manifest.json" -UseBasicParsing
-    $binaryInfo = $manifest.binaries.$platform
-    if (-not $binaryInfo) {
-        Write-Err "Platform $platform not found in manifest"
-    }
-    $checksum = $binaryInfo.sha256
-    $filename = $binaryInfo.filename
-    $installerUrl = $binaryInfo.url
-} catch {
-    Write-Err "Failed to fetch manifest: $_"
-}
-
-# Validate checksum format
-if (-not $checksum -or $checksum.Length -ne 64) {
-    Write-Err "Invalid checksum in manifest"
-}
-
-# Use default filename if not in manifest
-if (-not $filename) {
-    $filename = "Craft-Agent-$arch.exe"
-}
-
-# Use default URL if not in manifest
-if (-not $installerUrl) {
-    $installerUrl = "$VERSIONS_URL/$version/$filename"
-}
-
-Write-Info "Expected checksum: $($checksum.Substring(0, 16))..."
+$filename = "Craft-Agents-$version-$platform.exe"
+$installerUrl = "https://github.com/$GitHubRepo/releases/download/$tag/$filename"
 
 # Download installer with progress
 $installerPath = Join-Path $DOWNLOAD_DIR $filename
-$fileSize = $binaryInfo.size
-$fileSizeMB = [math]::Round($fileSize / 1MB, 1)
 
 # Clean up any partial download from previous attempts
 Remove-Item -Path $installerPath -Force -ErrorAction SilentlyContinue
 
-Write-Info "Downloading $filename ($fileSizeMB MB)..."
+Write-Info "Downloading $filename..."
 
 try {
     # Use WebRequest for download with progress
@@ -101,19 +91,8 @@ try {
         $fileStream.Write($buffer, 0, $read)
         $totalRead += $read
 
-        if ($fileSize -gt 0) {
-            $percent = [math]::Floor(($totalRead / $fileSize) * 100)
-            if ($percent -ne $lastPercent) {
-                $downloadedMB = [math]::Round($totalRead / 1MB, 1)
-                $barWidth = 40
-                # Cap at 100% for display (actual download may exceed manifest size slightly)
-                $displayPercent = [math]::Min($percent, 100)
-                $filled = [math]::Min([math]::Floor($displayPercent / (100 / $barWidth)), $barWidth)
-                $bar = "[" + ("#" * $filled) + ("-" * ($barWidth - $filled)) + "]"
-                Write-Host -NoNewline ("`r  $bar $percent% ($downloadedMB / $fileSizeMB MB)   ")
-                $lastPercent = $percent
-            }
-        }
+        $downloadedMB = [math]::Round($totalRead / 1MB, 1)
+        Write-Host -NoNewline ("`r  Downloaded $downloadedMB MB")
     }
 
     $fileStream.Close()
@@ -136,16 +115,33 @@ if (-not (Test-Path $installerPath)) {
     Write-Err "Download failed: file not found"
 }
 
-# Verify checksum
-Write-Info "Verifying checksum..."
-$actualHash = (Get-FileHash -Path $installerPath -Algorithm SHA256).Hash.ToLower()
-
-if ($actualHash -ne $checksum) {
-    Remove-Item -Path $installerPath -Force -ErrorAction SilentlyContinue
-    Write-Err "Checksum verification failed`n  Expected: $checksum`n  Actual:   $actualHash"
+# Verify checksum if available
+$checksum = $null
+$checksumUrl = "$installerUrl.sha256"
+try {
+    $checksumText = Invoke-WebRequest -Uri $checksumUrl -Headers $headers -UseBasicParsing -ErrorAction Stop
+    if ($checksumText.Content) {
+        $checksum = ($checksumText.Content -split '\s+')[0].ToLower()
+    }
+} catch {
+    $checksum = $null
 }
 
-Write-Success "Checksum verified!"
+if ($checksum) {
+    Write-Info "Verifying checksum..."
+    $actualHash = (Get-FileHash -Path $installerPath -Algorithm SHA256).Hash.ToLower()
+    if ($actualHash -ne $checksum) {
+        Remove-Item -Path $installerPath -Force -ErrorAction SilentlyContinue
+        Write-Err "Checksum verification failed`n  Expected: $checksum`n  Actual:   $actualHash"
+    }
+    Write-Success "Checksum verified!"
+} else {
+    if ($RequireChecksum) {
+        Remove-Item -Path $installerPath -Force -ErrorAction SilentlyContinue
+        Write-Err "Checksum file not found for $filename"
+    }
+    Write-Warn "Checksum file not found; skipping verification"
+}
 
 # Close the app if it's running
 $process = Get-Process -Name "Craft Agent" -ErrorAction SilentlyContinue
