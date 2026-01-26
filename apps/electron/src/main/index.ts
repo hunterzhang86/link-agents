@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeImage } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { SessionManager } from './sessions'
@@ -179,13 +179,33 @@ app.whenReady().then(async () => {
   if (process.platform === 'darwin' && app.dock) {
     const dockIconPath = join(__dirname, '../resources/icon.icns')
     if (existsSync(dockIconPath)) {
-      app.dock.setIcon(dockIconPath)
+      try {
+        // Use nativeImage to create icon object and handle errors properly
+        const icon = nativeImage.createFromPath(dockIconPath)
+        if (icon.isEmpty()) {
+          mainLog.warn('Dock icon file exists but is empty or invalid:', dockIconPath)
+        } else {
+          app.dock.setIcon(icon)
+          mainLog.info('Dock icon set successfully:', dockIconPath)
+        }
+      } catch (error) {
+        mainLog.error('Failed to set dock icon:', error)
+        // Continue execution - missing icon is not critical
+      }
+
       // Initialize badge icon for canvas-based badge overlay
       // Use PNG for badge overlay as it's more compatible with canvas operations
       const badgeIconPath = join(__dirname, '../resources/icon.png')
       if (existsSync(badgeIconPath)) {
-        initBadgeIcon(badgeIconPath)
+        try {
+          initBadgeIcon(badgeIconPath)
+        } catch (error) {
+          mainLog.error('Failed to initialize badge icon:', error)
+          // Continue execution - badge icon is not critical
+        }
       }
+    } else {
+      mainLog.warn('Dock icon file not found:', dockIconPath)
     }
 
     // Multi-instance dev: show instance number badge on dock icon
@@ -194,7 +214,12 @@ app.whenReady().then(async () => {
     if (instanceNum) {
       const num = parseInt(instanceNum, 10)
       if (!isNaN(num) && num > 0) {
-        initInstanceBadge(num)
+        try {
+          initInstanceBadge(num)
+        } catch (error) {
+          mainLog.error('Failed to set instance badge:', error)
+          // Continue execution - instance badge is not critical
+        }
       }
     }
   }
@@ -324,5 +349,43 @@ process.on('uncaughtException', (error) => {
 })
 
 process.on('unhandledRejection', (reason, promise) => {
-  mainLog.error('Unhandled rejection at:', promise, 'reason:', reason)
+  // Extract detailed error information
+  let errorDetails: string
+  if (reason instanceof Error) {
+    errorDetails = `${reason.message}${reason.stack ? '\n' + reason.stack : ''}`
+  } else if (reason && typeof reason === 'object') {
+    try {
+      errorDetails = JSON.stringify(reason, null, 2)
+    } catch {
+      errorDetails = String(reason)
+    }
+  } else {
+    errorDetails = String(reason)
+  }
+
+  // Try to extract promise information if available
+  let promiseInfo = 'unknown'
+  try {
+    // Promise objects don't serialize well, but we can try to get some info
+    if (promise && typeof promise === 'object') {
+      const promiseStr = String(promise)
+      if (promiseStr !== '[object Promise]') {
+        promiseInfo = promiseStr
+      } else {
+        // Check if promise has any inspectable properties
+        const keys = Object.keys(promise)
+        if (keys.length > 0) {
+          promiseInfo = `Promise with keys: ${keys.join(', ')}`
+        }
+      }
+    }
+  } catch {
+    // Ignore errors when trying to inspect promise
+  }
+
+  mainLog.error('Unhandled rejection:', {
+    reason: errorDetails,
+    promise: promiseInfo,
+    reasonType: reason instanceof Error ? 'Error' : typeof reason,
+  })
 })

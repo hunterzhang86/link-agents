@@ -217,6 +217,9 @@ function looksLikeFilePath(str: string): boolean {
  * Resolve a path (handle ~ expansion)
  */
 export function resolvePath(filePath: string): string {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('Path must be a non-empty string');
+  }
   if (filePath.startsWith('~/')) {
     const home = process.env.HOME || process.env.USERPROFILE || '';
     return resolve(home, filePath.slice(2));
@@ -279,6 +282,9 @@ export function getMimeType(filePath: string): string {
  * Read a file and return attachment info
  */
 export function readFileAttachment(filePath: string): FileAttachment | null {
+  if (!filePath || typeof filePath !== 'string') {
+    return null;
+  }
   try {
     const resolved = resolvePath(filePath);
 

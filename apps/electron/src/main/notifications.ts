@@ -154,8 +154,16 @@ function updateBadgeCountMacOS(count: number): void {
     } else {
       // Reset to original icon (no badge)
       if (baseIconPath) {
-        const originalIcon = nativeImage.createFromPath(baseIconPath)
-        app.dock?.setIcon(originalIcon)
+        try {
+          const originalIcon = nativeImage.createFromPath(baseIconPath)
+          if (originalIcon.isEmpty()) {
+            mainLog.warn('Failed to reset dock icon: icon is empty or invalid:', baseIconPath)
+          } else {
+            app.dock?.setIcon(originalIcon)
+          }
+        } catch (error) {
+          mainLog.error('Failed to reset dock icon:', error)
+        }
       }
     }
     mainLog.info('Badge count updated (macOS):', count)
