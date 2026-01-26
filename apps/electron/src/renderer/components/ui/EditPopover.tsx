@@ -479,7 +479,8 @@ export function EditPopover({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Enter submits, Shift+Enter inserts newline
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Don't submit when IME is composing (e.g., Chinese input)
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       handleSubmit()
     }
@@ -508,6 +509,9 @@ export function EditPopover({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           className={cn(
             'w-full min-h-[100px] resize-none px-0 py-0 text-sm leading-relaxed',
             'bg-transparent border-none',

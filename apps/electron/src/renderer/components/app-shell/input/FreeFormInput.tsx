@@ -213,13 +213,20 @@ export function FreeFormInput({
   }, [enabledSourceSlugs])
 
   // Sync from parent when inputValue changes externally (e.g., switching sessions)
+  // Don't sync empty string if we have content (prevents accidental clearing when user is typing)
   const prevInputValueRef = React.useRef(inputValue)
   React.useEffect(() => {
     if (inputValue !== undefined && inputValue !== prevInputValueRef.current) {
-      setInput(inputValue)
-      prevInputValueRef.current = inputValue
+      // Only sync if:
+      // 1. The new value is not empty, OR
+      // 2. The current input is also empty (intentional clear from parent)
+      // This prevents accidental clearing when user presses ESC and loses focus
+      if (inputValue !== '' || input.trim() === '') {
+        setInput(inputValue)
+        prevInputValueRef.current = inputValue
+      }
     }
-  }, [inputValue])
+  }, [inputValue, input])
 
   // Debounced sync to parent (saves draft without blocking typing)
   const syncTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -856,12 +863,13 @@ export function FreeFormInput({
       }
     }
 
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Don't submit when IME is composing (e.g., Chinese input)
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       // Submit message - backend handles interruption if processing
       submitMessage()
     }
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.nativeEvent.isComposing) {
       e.preventDefault()
       // Submit message - backend handles interruption if processing
       submitMessage()
@@ -905,22 +913,10 @@ export function FreeFormInput({
     // Update inline mention state (for @mentions - skills, sources, folders)
     inlineMention.handleInputChange(value, cursorPosition)
 
-    // Auto-capitalize first letter (but not for slash commands or @mentions)
-    let newValue = value
-    if (value.length > 0 && value.charAt(0) !== '/' && value.charAt(0) !== '@') {
-      const capitalizedFirst = value.charAt(0).toUpperCase()
-      if (capitalizedFirst !== value.charAt(0)) {
-        newValue = capitalizedFirst + value.slice(1)
-        setInput(newValue)
-        syncToParent(newValue)
-        return
-      }
-    }
-
     // Apply smart typography (-> to →, etc.)
     const typography = applySmartTypography(value, cursorPosition)
     if (typography.replaced) {
-      newValue = typography.text
+      const newValue = typography.text
       setInput(newValue)
       syncToParent(newValue)
       // Restore cursor position after React re-render
