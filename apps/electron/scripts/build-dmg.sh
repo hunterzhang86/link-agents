@@ -119,7 +119,10 @@ cd - > /dev/null
 # Extract and install
 unzip -o "$TEMP_DIR/${BUN_DOWNLOAD}.zip" -d "$TEMP_DIR"
 cp "$TEMP_DIR/${BUN_DOWNLOAD}/bun" "$ELECTRON_DIR/vendor/bun/"
-chmod +x "$ELECTRON_DIR/vendor/bun/bun"
+# Clear extended attributes that might cause permission issues
+xattr -c "$ELECTRON_DIR/vendor/bun/bun" 2>/dev/null || true
+# Ensure executable permissions
+chmod 755 "$ELECTRON_DIR/vendor/bun/bun"
 
 # 3.5. Download Git binary for macOS
 # Note: macOS typically has Git pre-installed, but we bundle it for consistency
@@ -134,14 +137,17 @@ if command -v git &> /dev/null; then
     # Copy system git binary
     SYSTEM_GIT_PATH=$(which git)
     cp "$SYSTEM_GIT_PATH" "$ELECTRON_DIR/vendor/git/bin/git"
-    chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+    # Clear extended attributes that might cause permission issues
+    xattr -c "$ELECTRON_DIR/vendor/git/bin/git" 2>/dev/null || true
+    # Ensure executable permissions
+    chmod 755 "$ELECTRON_DIR/vendor/git/bin/git"
     echo "Using system Git: $SYSTEM_GIT_PATH"
 else
     echo "WARNING: System Git not found. Please install Git via Homebrew or Xcode Command Line Tools."
     echo "For now, the app will try to use system Git at runtime."
     # Create a placeholder that will fall back to system git
     touch "$ELECTRON_DIR/vendor/git/bin/git"
-    chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+    chmod 755 "$ELECTRON_DIR/vendor/git/bin/git"
 fi
 
 # 4. Copy SDK from root node_modules (monorepo hoisting)
