@@ -193,15 +193,6 @@ try {
 }
 
 # 4. Copy SDK from root node_modules (monorepo hoisting)
-
-    # Give Windows time to release any file handles from the copy
-    Write-Host "Waiting for file handles to release..."
-    Start-Sleep -Seconds 3
-} finally {
-    Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
-}
-
-# 4. Copy SDK from root node_modules (monorepo hoisting)
 $SdkSource = "$RootDir\node_modules\@anthropic-ai\claude-agent-sdk"
 if (-not (Test-Path $SdkSource)) {
     Write-Host "ERROR: SDK not found at $SdkSource" -ForegroundColor Red
@@ -402,6 +393,9 @@ while (-not $builderSuccess -and $builderRetry -lt $maxBuilderRetries) {
         Start-Sleep -Seconds 1
     }
 
+    # Force npm as package manager to avoid "spawn pnpm ENOENT" error
+    # when pnpm is not available in CI environment
+    $env:npm_config_package_manager = "npm"
     npx electron-builder --win --x64 2>&1 | Tee-Object -Variable builderOutput
 
     if ($LASTEXITCODE -eq 0) {

@@ -43,6 +43,11 @@ extraResources:
 # Disable ASAR to avoid decompression overhead and click delays
 asar: false
 
+# Disable node module collector since we explicitly list all required files
+# This avoids the "spawn pnpm ENOENT" error when pnpm is not available in CI
+nodeGypRebuild: false
+npmRebuild: false
+
 mac:
   category: public.app-category.productivity
   icon: resources/icon.icns

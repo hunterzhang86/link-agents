@@ -197,6 +197,9 @@ if [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_SPECIFIC_PA
 fi
 
 # Run electron-builder
+# Force npm as package manager to avoid "spawn pnpm ENOENT" error
+# when pnpm is not available in CI environment
+export npm_config_package_manager=npm
 npx electron-builder $BUILDER_ARGS
 
 # 8. Verify the DMG was built

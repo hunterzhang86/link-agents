@@ -187,6 +187,9 @@ echo "Packaging app with electron-builder..."
 cd "$ELECTRON_DIR"
 
 # Run electron-builder
+# Force npm as package manager to avoid "spawn pnpm ENOENT" error
+# when pnpm is not available in CI environment
+export npm_config_package_manager=npm
 # Note: electron-builder may build both archs due to config, but we only use the requested one
 npx electron-builder --linux --${ARCH}
 

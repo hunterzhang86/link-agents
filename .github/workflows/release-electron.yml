@@ -1,6 +1,9 @@
 name: Build Desktop Releases
 
 on:
+  push:
+    branches:
+      - main
   release:
     types: [published]
   workflow_dispatch:
