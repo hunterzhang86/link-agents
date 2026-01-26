@@ -209,8 +209,8 @@ export npm_config_package_manager=npm
 npx electron-builder $BUILDER_ARGS
 
 # 8. Verify the DMG was built
-# electron-builder.yml uses artifactName to output: Craft-Agent-${arch}.dmg
-DMG_NAME="Craft-Agent-${ARCH}.dmg"
+# electron-builder.yml uses artifactName to output: Link-Agents-${arch}.dmg
+DMG_NAME="Link-Agents-${ARCH}.dmg"
 DMG_PATH="$ELECTRON_DIR/release/$DMG_NAME"
 
 if [ ! -f "$DMG_PATH" ]; then

@@ -45,7 +45,7 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           mkdir -p dist
-          mv apps/electron/release/Craft-Agent-arm64.dmg "dist/Craft-Agents-${VERSION}-mac-arm64.dmg"
+          mv apps/electron/release/Link-Agents-arm64.dmg "dist/Craft-Agents-${VERSION}-mac-arm64.dmg"
 
       - name: Upload release asset
         if: github.event_name == 'release'
@@ -86,7 +86,7 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           mkdir -p dist
-          mv apps/electron/release/Craft-Agent-x64.dmg "dist/Craft-Agents-${VERSION}-mac-x64.dmg"
+          mv apps/electron/release/Link-Agents-x64.dmg "dist/Craft-Agents-${VERSION}-mac-x64.dmg"
 
       - name: Upload release asset
         if: github.event_name == 'release'
@@ -127,6 +127,7 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           mkdir -p dist
+          # build-linux.sh renames Link-Agents-x86_64.AppImage to Craft-Agent-x64.AppImage
           mv apps/electron/release/Craft-Agent-x64.AppImage "dist/Craft-Agents-${VERSION}-linux-x64.AppImage"
 
       - name: Upload release asset
@@ -169,7 +170,7 @@ jobs:
         run: |
           $version = $env:RELEASE_TAG -replace '^v',''
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Move-Item "apps/electron/release/Craft-Agent-x64.exe" "dist/Craft-Agents-$version-win-x64.exe"
+          Move-Item "apps/electron/release/Link-Agents-x64.exe" "dist/Craft-Agents-$version-win-x64.exe"
 
       - name: Upload release asset
         if: github.event_name == 'release'

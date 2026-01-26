@@ -201,8 +201,9 @@ else
     LINUX_ARCH="aarch64"
 fi
 
-# electron-builder outputs: Craft-Agent-x86_64.AppImage or Craft-Agent-aarch64.AppImage
-BUILT_APPIMAGE_NAME="Craft-Agent-${LINUX_ARCH}.AppImage"
+# electron-builder outputs: Link-Agents-x86_64.AppImage or Link-Agents-aarch64.AppImage
+# (based on artifactName in electron-builder.yml)
+BUILT_APPIMAGE_NAME="Link-Agents-${LINUX_ARCH}.AppImage"
 BUILT_APPIMAGE_PATH="$ELECTRON_DIR/release/$BUILT_APPIMAGE_NAME"
 
 if [ ! -f "$BUILT_APPIMAGE_PATH" ]; then
