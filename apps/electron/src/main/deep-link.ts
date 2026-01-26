@@ -1,20 +1,20 @@
 /**
  * Deep Link Handler
  *
- * Parses craftagents:// URLs and routes to appropriate actions.
+ * Parses linkagents:// URLs and routes to appropriate actions.
  *
  * URL Formats (workspace is optional - uses active window if omitted):
  *
  * Compound format (hierarchical navigation):
- *   craftagents://allChats[/chat/{sessionId}]            - Chat list (all chats)
- *   craftagents://flagged[/chat/{sessionId}]             - Chat list (flagged filter)
- *   craftagents://state/{stateId}[/chat/{sessionId}]     - Chat list (state filter)
- *   craftagents://sources[/source/{sourceSlug}]          - Sources list
- *   craftagents://settings[/{subpage}]                   - Settings (general, shortcuts, preferences)
+ *   linkagents://allChats[/chat/{sessionId}]            - Chat list (all chats)
+ *   linkagents://flagged[/chat/{sessionId}]             - Chat list (flagged filter)
+ *   linkagents://state/{stateId}[/chat/{sessionId}]     - Chat list (state filter)
+ *   linkagents://sources[/source/{sourceSlug}]          - Sources list
+ *   linkagents://settings[/{subpage}]                   - Settings (general, shortcuts, preferences)
  *
  * Action format:
- *   craftagents://action/{actionName}[/{id}][?params]
- *   craftagents://workspace/{workspaceId}/action/{actionName}[?params]
+ *   linkagents://action/{actionName}[/{id}][?params]
+ *   linkagents://workspace/{workspaceId}/action/{actionName}[?params]
  *
  * Actions:
  *   new-chat                  - Create new chat, optional ?input=text&name=name&send=true
@@ -25,13 +25,13 @@
  *   unflag-session/{id}       - Unflag session
  *
  * Examples:
- *   craftagents://allChats                               (all chats view)
- *   craftagents://allChats/chat/abc123                   (specific chat)
- *   craftagents://settings/shortcuts                     (shortcuts page)
- *   craftagents://sources/source/github                  (github source info)
- *   craftagents://action/new-chat                        (uses active window)
- *   craftagents://action/resume-sdk-session/{sdkId}      (resume Claude Code session)
- *   craftagents://workspace/ws123/allChats/chat/abc123   (targets specific workspace)
+ *   linkagents://allChats                               (all chats view)
+ *   linkagents://allChats/chat/abc123                   (specific chat)
+ *   linkagents://settings/shortcuts                     (shortcuts page)
+ *   linkagents://sources/source/github                  (github source info)
+ *   linkagents://action/new-chat                        (uses active window)
+ *   linkagents://action/resume-sdk-session/{sdkId}      (resume Claude Code session)
+ *   linkagents://workspace/ws123/allChats/chat/abc123   (targets specific workspace)
  */
 
 import type { BrowserWindow } from 'electron'
@@ -100,14 +100,14 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     }
 
     // For custom protocols, the hostname contains the first path segment
-    // e.g., craftagents://workspace/ws123 → hostname='workspace', pathname='/ws123'
-    // e.g., craftagents://allChats/chat/abc → hostname='allChats', pathname='/chat/abc'
+    // e.g., linkagents://workspace/ws123 → hostname='workspace', pathname='/ws123'
+    // e.g., linkagents://allChats/chat/abc → hostname='allChats', pathname='/chat/abc'
     const host = parsed.hostname
     const pathParts = parsed.pathname.split('/').filter(Boolean)
     const windowMode = parseWindowMode(parsed)
     const rightSidebar = parseRightSidebar(parsed)
 
-    // craftagents://auth-callback?... (OAuth callbacks - return null to let existing handler process)
+    // linkagents://auth-callback?... (OAuth callbacks - return null to let existing handler process)
     if (host === 'auth-callback') {
       return null
     }
@@ -117,7 +117,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       'allChats', 'flagged', 'state', 'sources', 'settings', 'skills'
     ]
 
-    // craftagents://allChats/..., craftagents://settings/..., etc. (compound routes)
+    // linkagents://allChats/..., linkagents://settings/..., etc. (compound routes)
     if (COMPOUND_ROUTE_PREFIXES.includes(host)) {
       // Reconstruct the full compound route from host + pathname
       const viewRoute = pathParts.length > 0 ? `${host}/${pathParts.join('/')}` : host
@@ -129,7 +129,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       }
     }
 
-    // craftagents://workspace/{workspaceId}/... (with workspace targeting)
+    // linkagents://workspace/{workspaceId}/... (with workspace targeting)
     if (host === 'workspace') {
       const workspaceId = pathParts[0]
       if (!workspaceId) return null
@@ -167,7 +167,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       return result
     }
 
-    // craftagents://action/... (no workspace - uses active window)
+    // linkagents://action/... (no workspace - uses active window)
     if (host === 'action') {
       const result: DeepLinkTarget = {
         workspaceId: undefined,

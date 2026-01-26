@@ -3,16 +3,18 @@
  *
  * Displays comprehensive skill details including metadata,
  * permission modes, and instructions.
- * Uses the Info_ component system for consistent styling with SourceInfoPage.
+ * Includes integrated file editor for modifying skill content.
  */
 
 import * as React from 'react'
 import { useEffect, useState, useCallback } from 'react'
-import { Check, X, Minus } from 'lucide-react'
+import { Check, X, Minus, Edit } from 'lucide-react'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
+import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { SkillMenu } from '@/components/app-shell/SkillMenu'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
+import { SkillFileEditor } from '@/components/app-shell/SkillFileEditor'
 import { routes, navigate } from '@/lib/navigate'
 import {
   Info_Page,
@@ -31,6 +33,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
   const [skill, setSkill] = useState<LoadedSkill | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(true) // Default to editing mode
 
   // Load skill data
   useEffect(() => {
@@ -76,15 +79,20 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
   }, [workspaceId, skillSlug])
 
   // Handle edit button click
-  const handleEdit = useCallback(async () => {
-    if (!skill) return
+  const handleEdit = useCallback(() => {
+    setIsEditing(true)
+  }, [])
 
-    try {
-      await window.electronAPI.openSkillInEditor(workspaceId, skillSlug)
-    } catch (err) {
-      console.error('Failed to open skill in editor:', err)
-    }
-  }, [skill, workspaceId, skillSlug])
+  // Handle save from editor
+  const handleSave = useCallback(() => {
+    // Reload skill data to reflect changes
+    window.electronAPI.getSkills(workspaceId).then((skills) => {
+      const updated = skills.find((s) => s.slug === skillSlug)
+      if (updated) {
+        setSkill(updated)
+      }
+    })
+  }, [workspaceId, skillSlug])
 
   // Handle open in finder
   const handleOpenInFinder = useCallback(async () => {
@@ -136,6 +144,35 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
     window.electronAPI.showInFolder(`${skill.path}/SKILL.md`)
   }
 
+  // If in editing mode, show the editor
+  if (isEditing && skill) {
+    return (
+      <Info_Page loading={false}>
+        <Info_Page.Header
+          title={skillName}
+          titleMenu={
+            <SkillMenu
+              skillSlug={skillSlug}
+              skillName={skillName}
+              onOpenInNewWindow={handleOpenInNewWindow}
+              onShowInFinder={handleOpenInFinder}
+              onDelete={handleDelete}
+            />
+          }
+        />
+        <Info_Page.Content containerClassName="max-w-none px-3 pt-4 pb-4">
+          <div className="h-[calc(100vh-120px)]">
+            <SkillFileEditor
+              workspaceId={workspaceId}
+              skillSlug={skillSlug}
+              onSave={handleSave}
+            />
+          </div>
+        </Info_Page.Content>
+      </Info_Page>
+    )
+  }
+
   return (
     <Info_Page
       loading={loading}
@@ -168,15 +205,10 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
           <Info_Section
             title="Metadata"
             actions={
-              // EditPopover for AI-assisted metadata editing (name, description in frontmatter)
-              <EditPopover
-                trigger={<EditButton />}
-                {...getEditConfig('skill-metadata', skill.path)}
-                secondaryAction={{
-                  label: 'Edit File',
-                  onClick: handleEdit,
-                }}
-              />
+              <Button variant="ghost" size="sm" onClick={handleEdit}>
+                <Edit className="h-4 w-4 mr-1" />
+                Edit Files
+              </Button>
             }
           >
             <Info_Table>
@@ -243,7 +275,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
                 trigger={<EditButton />}
                 {...getEditConfig('skill-instructions', skill.path)}
                 secondaryAction={{
-                  label: 'Edit File',
+                  label: 'Edit Files',
                   onClick: handleEdit,
                 }}
               />

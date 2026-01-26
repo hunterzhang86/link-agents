@@ -7,10 +7,10 @@
  * - Updates dock badge with total unread count
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useAtomValue } from 'jotai'
-import type { Session } from '../../shared/types'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
+import { useAtomValue } from 'jotai'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Session } from '../../shared/types'
 
 /**
  * Draw a badge onto an icon image using Canvas
@@ -217,7 +217,7 @@ export function useNotifications({
     const title = session.name || 'New message'
 
     // Get message preview (truncate if needed)
-    let body = messagePreview || 'Craft Agent has a new message for you'
+    let body = messagePreview || 'Link Agent has a new message for you'
     if (body.length > 100) {
       body = body.substring(0, 97) + '...'
     }

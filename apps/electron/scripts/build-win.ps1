@@ -10,7 +10,7 @@ $RootDir = Split-Path -Parent (Split-Path -Parent $ElectronDir)
 # Configuration
 $BunVersion = "bun-v1.3.5"  # Pinned version for reproducible builds
 
-Write-Host "=== Building Craft Agent Windows Installer using electron-builder ===" -ForegroundColor Cyan
+Write-Host "=== Building Link Agent Windows Installer using electron-builder ===" -ForegroundColor Cyan
 
 # Debug: System information
 Write-Host ""
@@ -146,6 +146,53 @@ try {
 
     $BunExePath = "$ElectronDir\vendor\bun\bun.exe"
     Write-Host "Bun extracted to: $BunExePath" -ForegroundColor Green
+} finally {
+    if (Test-Path $TempDir) {
+        Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue
+    }
+}
+
+# 3.5. Download Git for Windows (MinGit - minimal Git)
+Write-Host "Downloading Git for Windows (MinGit)..."
+$GitVersion = "2.45.0"  # Pinned version
+New-Item -ItemType Directory -Force -Path "$ElectronDir\vendor\git\bin" | Out-Null
+
+$GitDownload = "MinGit-${GitVersion}-64-bit"
+$TempGitDir = Join-Path $env:TEMP "git-download-$(Get-Random)"
+New-Item -ItemType Directory -Force -Path $TempGitDir | Out-Null
+
+try {
+    # Download MinGit from Git for Windows releases
+    $GitZipUrl = "https://github.com/git-for-windows/git/releases/download/v${GitVersion}.windows.1/${GitDownload}.zip"
+    
+    Write-Host "Downloading from $GitZipUrl..."
+    $GitZipPath = Join-Path $TempGitDir "${GitDownload}.zip"
+    Invoke-WebRequest -Uri $GitZipUrl -OutFile $GitZipPath -ErrorAction Stop
+    
+    # Extract MinGit
+    Write-Host "Extracting MinGit..."
+    Expand-Archive -Path $GitZipPath -DestinationPath $TempGitDir -Force
+    
+    # Copy git.exe and required DLLs to vendor/git/bin
+    $GitSourceDir = Join-Path $TempGitDir $GitDownload
+    if (Test-Path "$GitSourceDir\mingw64\bin\git.exe") {
+        Copy-Item "$GitSourceDir\mingw64\bin\git.exe" "$ElectronDir\vendor\git\bin\git.exe" -Force
+        # Copy required DLLs
+        Copy-Item "$GitSourceDir\mingw64\bin\*.dll" "$ElectronDir\vendor\git\bin\" -Force -ErrorAction SilentlyContinue
+        Write-Host "Git extracted to: $ElectronDir\vendor\git\bin\git.exe" -ForegroundColor Green
+    } else {
+        Write-Host "WARNING: git.exe not found in MinGit archive. The app will try to use system Git." -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "WARNING: Failed to download Git for Windows: $_" -ForegroundColor Yellow
+    Write-Host "The app will try to use system Git if available." -ForegroundColor Yellow
+} finally {
+    if (Test-Path $TempGitDir) {
+        Remove-Item -Recurse -Force $TempGitDir -ErrorAction SilentlyContinue
+    }
+}
+
+# 4. Copy SDK from root node_modules (monorepo hoisting)
 
     # Give Windows time to release any file handles from the copy
     Write-Host "Waiting for file handles to release..."

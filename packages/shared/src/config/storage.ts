@@ -12,7 +12,7 @@ import { findIconFile } from '../utils/icon.ts';
 import { initializeDocs } from '../docs/index.ts';
 import { expandPath, toPortablePath } from '../utils/paths.ts';
 import { CONFIG_DIR } from './paths.ts';
-import type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
+import type { StoredAttachment, StoredMessage } from '@link-agents/core/types';
 import type { Plan } from '../agent/plan-types.ts';
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import { BUNDLED_CONFIG_DEFAULTS, type ConfigDefaults } from './config-defaults-schema.ts';
@@ -26,10 +26,10 @@ export type {
   McpAuthType,
   AuthType,
   OAuthCredentials,
-} from '@craft-agent/core/types';
+} from '@link-agents/core/types';
 
 // Import for local use
-import type { Workspace, AuthType } from '@craft-agent/core/types';
+import type { Workspace, AuthType } from '@link-agents/core/types';
 
 /**
  * Pending update info for auto-install on next launch
@@ -54,6 +54,9 @@ export interface StoredConfig {
   // Auto-update
   dismissedUpdateVersion?: string;  // Version that user dismissed (skip notifications for this version)
   pendingUpdate?: PendingUpdate;  // Update ready for auto-install on next launch
+  // Marketplace
+  marketplaceUrl?: string;  // Custom marketplace URL (defaults to anthropics/skills)
+  marketplaceCacheTTL?: number;  // Cache TTL in milliseconds (defaults to 24 hours)
 }
 
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -249,6 +252,50 @@ export function setNotificationsEnabled(enabled: boolean): void {
   const config = loadStoredConfig();
   if (!config) return;
   config.notificationsEnabled = enabled;
+  saveConfig(config);
+}
+
+/**
+ * Get marketplace URL (defaults to anthropics/skills).
+ */
+export function getMarketplaceUrl(): string {
+  const config = loadStoredConfig();
+  if (config?.marketplaceUrl) {
+    return config.marketplaceUrl;
+  }
+  const defaults = loadConfigDefaults();
+  return defaults.defaults.marketplaceUrl;
+}
+
+/**
+ * Set marketplace URL.
+ */
+export function setMarketplaceUrl(url: string): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.marketplaceUrl = url;
+  saveConfig(config);
+}
+
+/**
+ * Get marketplace cache TTL in milliseconds (defaults to 24 hours).
+ */
+export function getMarketplaceCacheTTL(): number {
+  const config = loadStoredConfig();
+  if (config?.marketplaceCacheTTL !== undefined) {
+    return config.marketplaceCacheTTL;
+  }
+  const defaults = loadConfigDefaults();
+  return defaults.defaults.marketplaceCacheTTL;
+}
+
+/**
+ * Set marketplace cache TTL in milliseconds.
+ */
+export function setMarketplaceCacheTTL(ttl: number): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.marketplaceCacheTTL = ttl;
   saveConfig(config);
 }
 
@@ -525,7 +572,7 @@ function ensureWorkspaceDir(workspaceId: string): string {
 
 
 // Re-export types from core for convenience
-export type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
+export type { StoredAttachment, StoredMessage } from '@link-agents/core/types';
 
 export interface WorkspaceConversation {
   messages: StoredMessage[];

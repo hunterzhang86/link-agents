@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils"
-import { WelcomeStep } from "./WelcomeStep"
 import { BillingMethodStep, type BillingMethod } from "./BillingMethodStep"
-import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
 import { CompletionStep } from "./CompletionStep"
+import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
+import { WelcomeStep } from "./WelcomeStep"
 
 export type OnboardingStep =
   | 'welcome'
@@ -49,7 +49,7 @@ interface OnboardingWizardProps {
 /**
  * OnboardingWizard - Full-screen onboarding flow container
  *
- * Manages the step-by-step flow for setting up Craft Agent:
+ * Manages the step-by-step flow for setting up Link Agent:
  * 1. Welcome
  * 2. Billing Method (choose: API Key / Claude OAuth)
  * 3. Credentials (API Key or Claude OAuth)

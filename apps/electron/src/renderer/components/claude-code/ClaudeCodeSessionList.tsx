@@ -10,7 +10,7 @@ import { ExternalLink, RefreshCw, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
-import { Spinner } from '@craft-agent/ui';
+import { Spinner } from '@link-agents/ui';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 
@@ -59,7 +59,7 @@ export function ClaudeCodeSessionList({
     loadSessions();
   }, [loadSessions]);
 
-  // Import session to Craft Agents via IPC
+  // Import session to Link Agents via IPC
   const handleImportSession = useCallback(
     async (sessionId: string) => {
       try {

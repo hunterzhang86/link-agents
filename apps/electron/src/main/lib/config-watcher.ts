@@ -19,33 +19,33 @@ import { watch, existsSync, readdirSync, statSync, readFileSync, mkdirSync } fro
 import { join, dirname, basename, relative } from 'path';
 import { homedir } from 'os';
 import type { FSWatcher } from 'fs';
-import { debug, perf } from '@craft-agent/shared/utils';
-import { loadStoredConfig, type StoredConfig } from '@craft-agent/shared/config';
+import { debug, perf } from '@link-agents/shared/utils';
+import { loadStoredConfig, type StoredConfig } from '@link-agents/shared/config';
 import {
   validateConfig,
   validatePreferences,
   validateSource,
   type ValidationResult,
-} from '@craft-agent/shared/config';
-import type { LoadedSource, SourceGuide } from '@craft-agent/shared/sources';
+} from '@link-agents/shared/config';
+import type { LoadedSource, SourceGuide } from '@link-agents/shared/sources';
 import {
   loadSource,
   loadWorkspaceSources,
   loadSourceGuide,
   sourceNeedsIconDownload,
   downloadSourceIcon,
-} from '@craft-agent/shared/sources';
-import { permissionsConfigCache, getAppPermissionsDir } from '@craft-agent/shared/agent';
-import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '@craft-agent/shared/workspaces';
-import type { LoadedSkill } from '@craft-agent/shared/skills';
-import { loadSkill, loadWorkspaceSkills, skillNeedsIconDownload, downloadSkillIcon } from '@craft-agent/shared/skills';
+} from '@link-agents/shared/sources';
+import { permissionsConfigCache, getAppPermissionsDir } from '@link-agents/shared/agent';
+import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '@link-agents/shared/workspaces';
+import type { LoadedSkill } from '@link-agents/shared/skills';
+import { loadSkill, loadWorkspaceSkills, skillNeedsIconDownload, downloadSkillIcon } from '@link-agents/shared/skills';
 import {
   loadStatusConfig,
   statusNeedsIconDownload,
   downloadStatusIcon,
-} from '@craft-agent/shared/statuses';
-import { loadAppTheme, loadPresetThemes, loadPresetTheme, getAppThemesDir } from '@craft-agent/shared/config';
-import type { ThemeOverrides, PresetTheme } from '@craft-agent/shared/config';
+} from '@link-agents/shared/statuses';
+import { loadAppTheme, loadPresetThemes, loadPresetTheme, getAppThemesDir } from '@link-agents/shared/config';
+import type { ThemeOverrides, PresetTheme } from '@link-agents/shared/config';
 
 // ============================================================
 // Constants

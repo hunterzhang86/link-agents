@@ -161,7 +161,7 @@ esac
 # Set platform-specific variables
 if [ "$OS_TYPE" = "darwin" ]; then
     platform="mac-${arch}"
-    APP_NAME="Craft Agent.app"
+    APP_NAME="Link Agent.app"
     INSTALL_DIR="/Applications"
     ext="dmg"
 else
@@ -279,22 +279,22 @@ if [ "$OS_TYPE" = "darwin" ]; then
 
     # Quit the app if it's running (use bundle ID for reliability)
     APP_BUNDLE_ID="com.lukilabs.craft-agent"
-    if pgrep -x "Craft Agent" >/dev/null 2>&1; then
-        info "Quitting Craft Agent..."
+    if pgrep -x "Link Agent" >/dev/null 2>&1; then
+        info "Quitting Link Agent..."
         osascript -e "tell application id \"$APP_BUNDLE_ID\" to quit" 2>/dev/null || true
         # Wait for app to quit (max 5 seconds) - POSIX compatible loop
         i=0
         while [ $i -lt 10 ]; do
-            if ! pgrep -x "Craft Agent" >/dev/null 2>&1; then
+            if ! pgrep -x "Link Agent" >/dev/null 2>&1; then
                 break
             fi
             sleep 0.5
             i=$((i + 1))
         done
         # Force kill if still running
-        if pgrep -x "Craft Agent" >/dev/null 2>&1; then
+        if pgrep -x "Link Agent" >/dev/null 2>&1; then
             warn "App didn't quit gracefully. Force quitting (unsaved data may be lost)..."
-            pkill -9 -x "Craft Agent" 2>/dev/null || true
+            pkill -9 -x "Link Agent" 2>/dev/null || true
             # Wait longer for macOS to release file handles
             sleep 3
         fi
@@ -341,10 +341,10 @@ if [ "$OS_TYPE" = "darwin" ]; then
     echo ""
     success "Installation complete!"
     echo ""
-    printf "%b\n" "  Craft Agent has been installed to ${BOLD}$INSTALL_DIR/$APP_NAME${NC}"
+    printf "%b\n" "  Link Agent has been installed to ${BOLD}$INSTALL_DIR/$APP_NAME${NC}"
     echo ""
     printf "%b\n" "  You can launch it from ${BOLD}Applications${NC} or by running:"
-    printf "%b\n" "    ${BOLD}open -a 'Craft Agent'${NC}"
+    printf "%b\n" "    ${BOLD}open -a 'Link Agent'${NC}"
     echo ""
 
 else
@@ -358,7 +358,7 @@ else
 
     # Kill the app if it's running
     if pgrep -f "Craft-Agent.*AppImage" >/dev/null 2>&1; then
-        info "Stopping Craft Agent..."
+        info "Stopping Link Agent..."
         pkill -f "Craft-Agent.*AppImage" 2>/dev/null || true
         sleep 2
     fi
@@ -379,7 +379,7 @@ else
     info "Creating launcher at $WRAPPER_PATH..."
     cat > "$WRAPPER_PATH" << 'WRAPPER_EOF'
 #!/bin/bash
-# Craft Agent launcher - handles Linux-specific AppImage issues
+# Link Agent launcher - handles Linux-specific AppImage issues
 
 APPIMAGE_PATH="$HOME/.craft-agent/app/Craft-Agent-x64.AppImage"
 ELECTRON_CACHE="$HOME/.config/@craft-agent"
@@ -387,7 +387,7 @@ ELECTRON_CACHE_ALT="$HOME/.cache/@craft-agent"
 
 # Verify AppImage exists
 if [ ! -f "$APPIMAGE_PATH" ]; then
-    echo "Error: Craft Agent not found at $APPIMAGE_PATH"
+    echo "Error: Link Agent not found at $APPIMAGE_PATH"
     echo "Reinstall: curl -fsSL https://agents.craft.do/install-app.sh | bash"
     exit 1
 fi

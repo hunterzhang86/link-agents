@@ -45,7 +45,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Lock files from other package managers
 pnpm-lock.yaml
 
-# Craft Agent local data (sessions, credentials, config)
+# Link Agent local data (sessions, credentials, config)
 .craft-agent/
 
 # SSH keys and secrets

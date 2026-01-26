@@ -20,15 +20,15 @@ import {
   isNewerVersion,
   getPlatformKey,
   getAppVersion,
-} from '@craft-agent/shared/version'
+} from '@link-agents/shared/version'
 import {
   getDismissedUpdateVersion,
   clearDismissedUpdateVersion,
   getPendingUpdate,
   setPendingUpdate,
   clearPendingUpdate,
-} from '@craft-agent/shared/config'
-import type { VersionManifest, BinaryInfo } from '@craft-agent/shared/version/manifest'
+} from '@link-agents/shared/config'
+import type { VersionManifest, BinaryInfo } from '@link-agents/shared/version/manifest'
 import type { UpdateInfo } from '../shared/types'
 import type { WindowManager } from './window-manager'
 

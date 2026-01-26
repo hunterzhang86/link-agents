@@ -8,9 +8,9 @@
  * Guides are stored at ~/.craft-agent/docs/source-guides/ and copied on first run.
  */
 
-import { join } from 'path';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { join } from 'path';
 import { isDebugEnabled } from '../utils/debug.ts';
 import { getAppVersion } from '../version/app-version.ts';
 
@@ -527,7 +527,7 @@ The MCP URL \`https://api.githubcopilot.com/mcp/\` is **CORRECT**. Do NOT use We
 
 #### Authentication - OAuth Will Fail (Expected)
 
-GitHub's MCP server requires OAuth with a **pre-registered client app**. Craft Agent is NOT registered with GitHub, so OAuth authentication WILL fail. This is expected behavior - do NOT troubleshoot or search for solutions.
+GitHub's MCP server requires OAuth with a **pre-registered client app**. Link Agent is NOT registered with GitHub, so OAuth authentication WILL fail. This is expected behavior - do NOT troubleshoot or search for solutions.
 
 **The ONLY solution is a Personal Access Token (PAT):**
 

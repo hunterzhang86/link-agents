@@ -11,7 +11,7 @@ import { ExternalLink, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
-import { Spinner } from '@craft-agent/ui';
+import { Spinner } from '@link-agents/ui';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { navigate, routes } from '@/lib/navigate';

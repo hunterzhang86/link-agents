@@ -1,26 +1,24 @@
-import * as React from 'react'
-import type { ComponentEntry } from './types'
-import { AttachmentPreview } from '@/components/app-shell/AttachmentPreview'
-import { SetupAuthBanner } from '@/components/app-shell/SetupAuthBanner'
-import { TurnCard, type ActivityItem } from '@craft-agent/ui'
-import type { BackgroundTask } from '@/components/app-shell/ActiveTasksBar'
 import { ActiveOptionBadges } from '@/components/app-shell/ActiveOptionBadges'
+import type { BackgroundTask } from '@/components/app-shell/ActiveTasksBar'
+import { AttachmentPreview } from '@/components/app-shell/AttachmentPreview'
 import { InputContainer } from '@/components/app-shell/input'
 import type { StructuredResponse } from '@/components/app-shell/input/structured/types'
+import { SetupAuthBanner } from '@/components/app-shell/SetupAuthBanner'
 import { EmptyStateHint, getHintCount, getHintTemplate } from '@/components/chat/EmptyStateHint'
 import { Button } from '@/components/ui/button'
-import { motion } from 'motion/react'
-import { ArrowUp, Paperclip, ChevronDown, Sparkles } from 'lucide-react'
+import { TurnCard, type ActivityItem } from '@link-agents/ui'
+import { Sparkles } from 'lucide-react'
+import * as React from 'react'
 import type { FileAttachment, PermissionRequest } from '../../../shared/types'
-import { cn } from '@/lib/utils'
 import {
-  ensureMockElectronAPI,
-  mockInputCallbacks,
-  mockAttachmentCallbacks,
-  mockSources,
-  sampleImageAttachment,
-  samplePdfAttachment,
+    ensureMockElectronAPI,
+    mockAttachmentCallbacks,
+    mockInputCallbacks,
+    mockSources,
+    sampleImageAttachment,
+    samplePdfAttachment,
 } from '../mock-utils'
+import type { ComponentEntry } from './types'
 
 const sampleCodeAttachment: FileAttachment = {
   type: 'text',
@@ -491,7 +489,7 @@ function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBar
 
         {/* Real InputContainer */}
         <InputContainer
-          placeholder="Message Craft Agent..."
+          placeholder="Message Link Agent..."
           disabled={false}
           isProcessing={false}
           currentModel="claude-sonnet-4-5-20250929"
@@ -599,7 +597,7 @@ function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, 
 
       {/* Real InputContainer - handles animation automatically */}
       <InputContainer
-        placeholder="Message Craft Agent..."
+        placeholder="Message Link Agent..."
         disabled={false}
         isProcessing={false}
         currentModel="claude-sonnet-4-5-20250929"
@@ -941,7 +939,7 @@ export const chatComponents: ComponentEntry[] = [
         name: 'placeholder',
         description: 'Textarea placeholder text',
         control: { type: 'string', placeholder: 'Message...' },
-        defaultValue: 'Message Craft Agent...',
+        defaultValue: 'Message Link Agent...',
       },
       {
         name: 'currentModel',

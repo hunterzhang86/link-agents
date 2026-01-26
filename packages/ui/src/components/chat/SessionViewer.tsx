@@ -7,21 +7,21 @@
  * Renders a session's messages as turn cards with gradient fade at top/bottom.
  */
 
+import type { StoredSession } from '@link-agents/core'
 import type { ReactNode } from 'react'
-import { useMemo, useState, useCallback } from 'react'
-import type { StoredSession } from '@craft-agent/core'
-import { cn } from '../../lib/utils'
-import { CHAT_LAYOUT, CHAT_CLASSES } from '../../lib/layout'
+import { useCallback, useMemo, useState } from 'react'
 import { PlatformProvider, type PlatformActions } from '../../context'
-import { TurnCard } from './TurnCard'
-import { UserMessageBubble } from './UserMessageBubble'
+import { CHAT_CLASSES, CHAT_LAYOUT } from '../../lib/layout'
+import { cn } from '../../lib/utils'
 import { SystemMessage } from './SystemMessage'
 import {
-  groupMessagesByTurn,
-  storedToMessage,
-  type AssistantTurn,
-  type ActivityItem,
+    groupMessagesByTurn,
+    storedToMessage,
+    type ActivityItem,
+    type AssistantTurn,
 } from './turn-utils'
+import { TurnCard } from './TurnCard'
+import { UserMessageBubble } from './UserMessageBubble'
 
 export type SessionViewerMode = 'interactive' | 'readonly'
 
@@ -47,9 +47,9 @@ export interface SessionViewerProps {
 }
 
 /**
- * CraftAgentLogo - The Craft Agent "C" logo for branding
+ * LinkAgentLogo - The Link Agent "C" logo for branding
  */
-function CraftAgentLogo({ className }: { className?: string }) {
+function LinkAgentLogo({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -214,7 +214,7 @@ export function SessionViewer({
 
             {/* Bottom branding */}
             <div className={CHAT_CLASSES.brandingContainer}>
-              <CraftAgentLogo className="w-8 h-8 text-[#9570BE]/40" />
+              <LinkAgentLogo className="w-8 h-8 text-[#9570BE]/40" />
             </div>
             </div>
           </div>

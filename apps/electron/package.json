@@ -1,14 +1,14 @@
 {
-  "name": "@craft-agent/electron",
+  "name": "@link-agents/electron",
   "version": "0.2.22",
-  "description": "Electron desktop app for Craft Agent",
+  "description": "Electron desktop app for Link Agents",
   "main": "dist/main.cjs",
   "private": true,
   "author": {
-    "name": "Craft Docs Ltd.",
-    "email": "support@craft.do"
+    "name": "Link Agents",
+    "email": "support@linkagents.dev"
   },
-  "homepage": "https://agents.craft.do",
+  "homepage": "https://linkagents.dev",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -34,9 +34,9 @@
     "lint:fix": "eslint src/ --fix"
   },
   "dependencies": {
-    "@craft-agent/core": "workspace:*",
-    "@craft-agent/shared": "workspace:*",
-    "@craft-agent/ui": "workspace:*",
+    "@link-agents/core": "workspace:*",
+    "@link-agents/shared": "workspace:*",
+    "@link-agents/ui": "workspace:*",
     "@paper-design/shaders-react": "^0.0.69",
     "@pierre/diffs": "^1.0.4",
     "@radix-ui/react-context-menu": "^2.2.16",

@@ -10,7 +10,6 @@
  */
 
 import { execSync } from 'child_process'
-import { mainLog } from './logger'
 
 // Environment variables that should NOT be imported from the shell
 // VITE_* vars from dev mode would make packaged app try to load from localhost
@@ -33,12 +32,12 @@ export function loadShellEnv(): void {
 
   // Skip in dev mode - terminal launches already have full environment
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainLog.info('[shell-env] Skipping in dev mode (already have shell environment)')
+    console.log('[shell-env] Skipping in dev mode (already have shell environment)')
     return
   }
 
   const shell = process.env.SHELL || '/bin/zsh'
-  mainLog.info(`[shell-env] Loading environment from ${shell}`)
+  console.log(`[shell-env] Loading environment from ${shell}`)
 
   try {
     // Run login shell to get full environment
@@ -72,17 +71,17 @@ export function loadShellEnv(): void {
       }
     }
 
-    mainLog.info(`[shell-env] Loaded ${count} environment variables`)
+    console.log(`[shell-env] Loaded ${count} environment variables`)
 
     // Log PATH for debugging
     if (process.env.PATH) {
       const pathCount = process.env.PATH.split(':').length
-      mainLog.info(`[shell-env] PATH has ${pathCount} entries`)
+      console.log(`[shell-env] PATH has ${pathCount} entries`)
     }
   } catch (error) {
     // Don't fail app startup if shell env loading fails
-    mainLog.warn(`[shell-env] Failed to load shell environment: ${error}`)
-    mainLog.warn('[shell-env] Adding common paths as fallback')
+    console.warn(`[shell-env] Failed to load shell environment: ${error}`)
+    console.warn('[shell-env] Adding common paths as fallback')
 
     // Fallback: add common paths that are likely to be needed
     const fallbackPaths = [

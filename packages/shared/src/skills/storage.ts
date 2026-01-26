@@ -11,10 +11,11 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from 'fs';
 import { join } from 'path';
 import matter from 'gray-matter';
-import type { LoadedSkill, SkillMetadata } from './types.ts';
+import type { LoadedSkill, SkillMetadata, SkillSource } from './types.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import {
   validateIconValue,
@@ -96,12 +97,25 @@ export function loadSkill(workspaceRoot: string, slug: string): LoadedSkill | nu
     return null;
   }
 
+  // Load source metadata if exists
+  const sourceFile = join(skillDir, '.source.json');
+  let source: SkillSource | undefined;
+  if (existsSync(sourceFile)) {
+    try {
+      const sourceContent = readFileSync(sourceFile, 'utf-8');
+      source = JSON.parse(sourceContent) as SkillSource;
+    } catch {
+      // Ignore invalid source file
+    }
+  }
+
   return {
     slug,
     metadata: parsed.metadata,
     content: parsed.body,
     iconPath: findIconFile(skillDir),
     path: skillDir,
+    source,
   };
 }
 
@@ -149,6 +163,85 @@ export function getSkillIconPath(workspaceRoot: string, slug: string): string | 
   }
 
   return findIconFile(skillDir) || null;
+}
+
+// ============================================================
+// Update Operations
+// ============================================================
+
+/**
+ * Update skill metadata and content
+ * @param workspaceRoot - Absolute path to workspace root
+ * @param slug - Skill directory name (immutable)
+ * @param metadata - Updated metadata
+ * @param content - Updated markdown content
+ */
+export function updateSkill(
+  workspaceRoot: string,
+  slug: string,
+  metadata: SkillMetadata,
+  content: string
+): LoadedSkill | null {
+  const skillsDir = getWorkspaceSkillsPath(workspaceRoot);
+  const skillDir = join(skillsDir, slug);
+  const skillFile = join(skillDir, 'SKILL.md');
+
+  // Validate skill exists
+  if (!existsSync(skillDir) || !existsSync(skillFile)) {
+    return null;
+  }
+
+  // Validate metadata
+  if (!metadata.name || !metadata.description) {
+    throw new Error('Name and description are required');
+  }
+
+  // Validate icon if provided
+  const validatedIcon = validateIconValue(metadata.icon, 'Skills');
+
+  // Build SKILL.md content with frontmatter
+  const frontmatter = {
+    name: metadata.name,
+    description: metadata.description,
+    ...(metadata.globs && { globs: metadata.globs }),
+    ...(metadata.alwaysAllow && { alwaysAllow: metadata.alwaysAllow }),
+    ...(validatedIcon && { icon: validatedIcon }),
+  };
+
+  const yamlContent = matter.stringify(content, frontmatter);
+
+  // Write updated SKILL.md
+  writeFileSync(skillFile, yamlContent, 'utf-8');
+
+  // Update .source.json to mark as modified
+  const sourceFile = join(skillDir, '.source.json');
+  if (existsSync(sourceFile)) {
+    try {
+      const sourceContent = readFileSync(sourceFile, 'utf-8');
+      const source = JSON.parse(sourceContent) as SkillSource;
+      source.modified = true;
+      writeFileSync(sourceFile, JSON.stringify(source, null, 2), 'utf-8');
+    } catch {
+      // If source file is invalid, create new one marking as modified
+      const source: SkillSource = {
+        type: 'local',
+        modified: true,
+        installedAt: new Date().toISOString(),
+      };
+      writeFileSync(sourceFile, JSON.stringify(source, null, 2), 'utf-8');
+    }
+  } else {
+    // No source file exists, create one
+    const source: SkillSource = {
+      type: 'local',
+      modified: true,
+      installedAt: new Date().toISOString(),
+    };
+    writeFileSync(sourceFile, JSON.stringify(source, null, 2), 'utf-8');
+  }
+
+  // Reload and return updated skill
+  return loadSkill(workspaceRoot, slug);
 }
 
 // ============================================================
@@ -242,3 +335,24 @@ export function skillNeedsIconDownload(skill: LoadedSkill): boolean {
 
 // Re-export icon utilities for convenience
 export { isIconUrl } from '../utils/icon.ts';
+
+// ============================================================
+// Source Metadata
+// ============================================================
+
+/**
+ * Save source metadata to .source.json
+ * @param workspaceRoot - Absolute path to workspace root
+ * @param slug - Skill directory name
+ * @param source - Source metadata to save
+ */
+export function saveSkillSource(
+  workspaceRoot: string,
+  slug: string,
+  source: SkillSource
+): void {
+  const skillsDir = getWorkspaceSkillsPath(workspaceRoot);
+  const sourceFile = join(skillsDir, slug, '.source.json');
+  writeFileSync(sourceFile, JSON.stringify(source, null, 2), 'utf-8');
+}
+

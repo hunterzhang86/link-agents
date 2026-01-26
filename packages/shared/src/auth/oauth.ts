@@ -1,8 +1,8 @@
+import { createHash, randomBytes } from 'crypto';
 import { createServer, type Server } from 'http';
-import { URL } from 'url';
 import open from 'open';
-import { randomBytes, createHash } from 'crypto';
-import { CRAFT_LOGO_HTML } from '../branding.ts';
+import { URL } from 'url';
+import { LINK_AGENTS_LOGO_HTML } from '../branding.ts';
 
 export interface OAuthConfig {
   mcpBaseUrl: string; // e.g., http://localhost:3000/v1/links/abc123
@@ -22,7 +22,7 @@ export interface OAuthCallbacks {
 
 const CALLBACK_PORT = 8914;
 const CALLBACK_PATH = '/oauth/callback';
-const CLIENT_NAME = 'Craft Agent';
+const CLIENT_NAME = 'Link Agent';
 
 /**
  * Generate a styled OAuth callback page with terminal emulator aesthetic
@@ -447,7 +447,7 @@ function generateOAuthPage(options: {
       </div>
 
       <div class="logo-container">
-<pre class="logo">${CRAFT_LOGO_HTML}</pre>
+<pre class="logo">${LINK_AGENTS_LOGO_HTML}</pre>
       </div>
 
       <div class="terminal-output">

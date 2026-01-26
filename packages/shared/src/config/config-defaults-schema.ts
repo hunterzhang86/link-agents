@@ -3,7 +3,7 @@
  * This file contains the default values for all configuration options.
  */
 
-import type { AuthType } from '@craft-agent/core/types';
+import type { AuthType } from '@link-agents/core/types';
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
 
@@ -14,6 +14,8 @@ export interface ConfigDefaults {
     authType: AuthType;
     notificationsEnabled: boolean;
     colorTheme: string;
+    marketplaceUrl: string;
+    marketplaceCacheTTL: number;
   };
   workspaceDefaults: {
     thinkingLevel: ThinkingLevel;
@@ -31,11 +33,13 @@ export interface ConfigDefaults {
  */
 export const BUNDLED_CONFIG_DEFAULTS: ConfigDefaults = {
   version: '1.0',
-  description: 'Default configuration values for Craft Agent',
+  description: 'Default configuration values for Link Agent',
   defaults: {
     authType: 'api_key',
     notificationsEnabled: true,
     colorTheme: 'default',
+    marketplaceUrl: 'https://github.com/anthropics/skills',
+    marketplaceCacheTTL: 1000 * 60 * 60 * 24, // 24 hours
   },
   workspaceDefaults: {
     thinkingLevel: 'think',

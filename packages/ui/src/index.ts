@@ -1,5 +1,5 @@
 /**
- * @craft-agent/ui - Shared React UI components for Craft Agent
+ * @link-agents/ui - Shared React UI components for Link Agent
  *
  * This package provides platform-agnostic UI components that work in both:
  * - Electron desktop app (full interactive mode)
@@ -16,122 +16,55 @@
 
 // Context
 export {
-  PlatformProvider,
-  usePlatform,
-  type PlatformActions,
-  type PlatformProviderProps,
-  ShikiThemeProvider,
-  useShikiTheme,
-  type ShikiThemeProviderProps,
+    PlatformProvider, ShikiThemeProvider, usePlatform, useShikiTheme, type PlatformActions,
+    type PlatformProviderProps, type ShikiThemeProviderProps
 } from './context'
 
 // Chat components
 export {
-  SessionViewer,
-  TurnCard,
-  TurnCardActionsMenu,
-  ResponseCard,
-  UserMessageBubble,
-  SystemMessage,
-  FileTypeIcon,
-  getFileTypeLabel,
-  type SessionViewerProps,
-  type SessionViewerMode,
-  type TurnCardProps,
-  type TurnCardActionsMenuProps,
-  type ResponseCardProps,
-  type UserMessageBubbleProps,
-  type SystemMessageProps,
-  type SystemMessageType,
-  type FileTypeIconProps,
-  type ActivityItem,
-  type ResponseContent,
-  type TodoItem,
+    FileTypeIcon, ResponseCard, SessionViewer, SystemMessage, TurnCard,
+    TurnCardActionsMenu, UserMessageBubble, getFileTypeLabel, type ActivityItem, type FileTypeIconProps, type ResponseCardProps, type ResponseContent, type SessionViewerMode, type SessionViewerProps, type SystemMessageProps,
+    type SystemMessageType, type TodoItem, type TurnCardActionsMenuProps, type TurnCardProps, type UserMessageBubbleProps
 } from './components/chat'
 
 // Markdown
 export {
-  Markdown,
-  MemoizedMarkdown,
-  CodeBlock,
-  InlineCode,
-  CollapsibleMarkdownProvider,
-  useCollapsibleMarkdown,
-  type MarkdownProps,
-  type RenderMode,
+    CodeBlock, CollapsibleMarkdownProvider, InlineCode, Markdown,
+    MemoizedMarkdown, useCollapsibleMarkdown,
+    type MarkdownProps,
+    type RenderMode
 } from './components/markdown'
 
 // UI primitives
 export {
-  Spinner,
-  SimpleDropdown,
-  SimpleDropdownItem,
-  PreviewHeader,
-  PreviewHeaderBadge,
-  PREVIEW_BADGE_VARIANTS,
-  type SpinnerProps,
-  type SimpleDropdownProps,
-  type SimpleDropdownItemProps,
-  type PreviewHeaderProps,
-  type PreviewHeaderBadgeProps,
-  type PreviewBadgeVariant,
+    PREVIEW_BADGE_VARIANTS, PreviewHeader,
+    PreviewHeaderBadge, SimpleDropdown,
+    SimpleDropdownItem, Spinner, type PreviewBadgeVariant, type PreviewHeaderBadgeProps, type PreviewHeaderProps, type SimpleDropdownItemProps, type SimpleDropdownProps, type SpinnerProps
 } from './components/ui'
 
 // Code viewer components
 export {
-  ShikiCodeViewer,
-  ShikiDiffViewer,
-  LANGUAGE_MAP,
-  getLanguageFromPath,
-  formatFilePath,
-  truncateFilePath,
-  type ShikiCodeViewerProps,
-  type ShikiDiffViewerProps,
+    LANGUAGE_MAP, ShikiCodeViewer,
+    ShikiDiffViewer, formatFilePath, getLanguageFromPath, truncateFilePath,
+    type ShikiCodeViewerProps,
+    type ShikiDiffViewerProps
 } from './components/code-viewer'
 
 // Terminal components
 export {
-  TerminalOutput,
-  parseAnsi,
-  stripAnsi,
-  isGrepContentOutput,
-  parseGrepOutput,
-  ANSI_COLORS,
-  type TerminalOutputProps,
-  type ToolType,
-  type AnsiSpan,
-  type GrepLine,
+    ANSI_COLORS, TerminalOutput, isGrepContentOutput, parseAnsi, parseGrepOutput, stripAnsi, type AnsiSpan,
+    type GrepLine, type TerminalOutputProps,
+    type ToolType
 } from './components/terminal'
 
 // Overlay components
 export {
-  // Base overlay components
-  FullscreenOverlayBase,
-  PreviewOverlay,
-  CopyButton,
-  type FullscreenOverlayBaseProps,
-  type PreviewOverlayProps,
-  type BadgeVariant,
-  type CopyButtonProps,
-  // Specialized overlays
-  CodePreviewOverlay,
-  DiffPreviewOverlay,
-  MultiDiffPreviewOverlay,
-  TerminalPreviewOverlay,
-  GenericOverlay,
-  JSONPreviewOverlay,
-  DataTableOverlay,
-  DocumentFormattedMarkdownOverlay,
-  detectLanguageFromPath,
-  type CodePreviewOverlayProps,
-  type DiffPreviewOverlayProps,
-  type MultiDiffPreviewOverlayProps,
-  type FileChange,
-  type TerminalPreviewOverlayProps,
-  type GenericOverlayProps,
-  type JSONPreviewOverlayProps,
-  type DataTableOverlayProps,
-  type DocumentFormattedMarkdownOverlayProps,
+    // Specialized overlays
+    CodePreviewOverlay, CopyButton, DataTableOverlay, DiffPreviewOverlay, DocumentFormattedMarkdownOverlay,
+    // Base overlay components
+    FullscreenOverlayBase, GenericOverlay,
+    JSONPreviewOverlay, MultiDiffPreviewOverlay, PreviewOverlay, TerminalPreviewOverlay, detectLanguageFromPath, type BadgeVariant, type CodePreviewOverlayProps, type CopyButtonProps, type DataTableOverlayProps, type DiffPreviewOverlayProps, type DocumentFormattedMarkdownOverlayProps, type FileChange, type FullscreenOverlayBaseProps, type GenericOverlayProps,
+    type JSONPreviewOverlayProps, type MultiDiffPreviewOverlayProps, type PreviewOverlayProps, type TerminalPreviewOverlayProps
 } from './components/overlay'
 
 // Utilities
@@ -139,30 +72,16 @@ export { cn } from './lib/utils'
 
 // Layout constants and hooks
 export {
-  CHAT_LAYOUT,
-  CHAT_CLASSES,
-  OVERLAY_LAYOUT,
-  useOverlayMode,
-  type OverlayMode,
+    CHAT_CLASSES, CHAT_LAYOUT, OVERLAY_LAYOUT,
+    useOverlayMode,
+    type OverlayMode
 } from './lib/layout'
 
 // Tool result parsers
 export {
-  parseReadResult,
-  parseBashResult,
-  parseGrepResult,
-  parseGlobResult,
-  extractOverlayData,
-  type ReadResult,
-  type BashResult,
-  type GrepResult,
-  type GlobResult,
-  type CodeOverlayData,
-  type DiffOverlayData,
-  type TerminalOverlayData,
-  type GenericOverlayData,
-  type JSONOverlayData,
-  type OverlayData,
+    extractOverlayData, parseBashResult, parseGlobResult, parseGrepResult, parseReadResult, type BashResult, type CodeOverlayData,
+    type DiffOverlayData, type GenericOverlayData, type GlobResult, type GrepResult, type JSONOverlayData,
+    type OverlayData, type ReadResult, type TerminalOverlayData
 } from './lib/tool-parsers'
 
 // Turn utilities (pure functions)
@@ -170,7 +89,8 @@ export * from './components/chat/turn-utils'
 
 // Icons
 export {
-  Icon_Folder,
-  Icon_Inbox,
-  type IconProps,
+    Icon_Folder,
+    Icon_Inbox,
+    type IconProps
 } from './components/icons'
+

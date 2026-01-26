@@ -1,7 +1,7 @@
 /**
  * Claude Code Session Writer
  *
- * Exports Craft Agents sessions back to Claude Code format.
+ * Exports Link Agents sessions back to Claude Code format.
  */
 
 import * as fs from 'node:fs';
@@ -14,7 +14,7 @@ import type {
   ClaudeCodeContentBlock,
 } from './claude-code-types.ts';
 import type { StoredSession } from './types.ts';
-import type { StoredMessage } from '@craft-agent/core/types';
+import type { StoredMessage } from '@link-agents/core/types';
 import { expandPath } from '../utils/paths.ts';
 
 const getClaudeConfigDir = (): string =>
@@ -31,7 +31,7 @@ export class ClaudeCodeWriter {
   }
 
   /**
-   * Export a Craft Agents session to Claude Code format
+   * Export a Link Agents session to Claude Code format
    */
   async exportSession(
     session: StoredSession,

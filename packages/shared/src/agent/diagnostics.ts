@@ -4,8 +4,8 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { getLastApiError } from '../network-interceptor.ts';
 import { getAnthropicApiKey, getClaudeOAuthToken, type AuthType } from '../config/storage.ts';
+import { getLastApiError } from '../network-interceptor.ts';
 
 export type DiagnosticCode =
   | 'billing_error'         // HTTP 402 from Anthropic API
@@ -117,7 +117,7 @@ async function checkAnthropicAvailability(): Promise<CheckResult> {
     try {
       // Simple connectivity check to Anthropic's API endpoint
       // HEAD request doesn't require auth and checks if service is up
-      const response = await fetch('https://api.anthropic.com/v1/models', {
+      const response = await fetch((process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') + '/v1/models', {
         method: 'HEAD',
         signal: controller.signal,
       });

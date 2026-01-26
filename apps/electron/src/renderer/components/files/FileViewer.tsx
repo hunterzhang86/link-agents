@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { FileText } from 'lucide-react'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@link-agents/ui'
+import { ShikiCodeViewer } from '@/components/shiki/ShikiCodeViewer'
 
 interface FileViewerProps {
   path: string | null
@@ -59,25 +59,21 @@ export function FileViewer({ path }: FileViewerProps) {
       </div>
 
       {/* File content */}
-      <ScrollArea className="flex-1">
-        <div className="p-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-3">
-              <Spinner className="text-lg" />
-              <span className="text-sm font-medium">Loading content...</span>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-32 text-destructive gap-2">
-              <p className="text-sm font-medium">Error loading file</p>
-              <p className="text-xs">{error}</p>
-            </div>
-          ) : (
-            <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed selection:bg-foreground/20">
-              {content}
-            </pre>
-          )}
-        </div>
-      </ScrollArea>
+      <div className="flex-1 overflow-hidden">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-3">
+            <Spinner className="text-lg" />
+            <span className="text-sm font-medium">Loading content...</span>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-32 text-destructive gap-2">
+            <p className="text-sm font-medium">Error loading file</p>
+            <p className="text-xs">{error}</p>
+          </div>
+        ) : (
+          <ShikiCodeViewer code={content} filePath={path} />
+        )}
+      </div>
     </div>
   )
 }

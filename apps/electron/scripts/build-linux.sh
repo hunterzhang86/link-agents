@@ -65,7 +65,7 @@ done
 # Configuration
 BUN_VERSION="bun-v1.3.5"  # Pinned version for reproducible builds
 
-echo "=== Building Craft Agent AppImage (${ARCH}) using electron-builder ==="
+echo "=== Building Link Agent AppImage (${ARCH}) using electron-builder ==="
 if [ "$UPLOAD" = true ]; then
     echo "Will upload to S3 after build"
 fi
@@ -112,6 +112,54 @@ cd - > /dev/null
 unzip -o "$TEMP_DIR/${BUN_DOWNLOAD}.zip" -d "$TEMP_DIR"
 cp "$TEMP_DIR/${BUN_DOWNLOAD}/bun" "$ELECTRON_DIR/vendor/bun/"
 chmod +x "$ELECTRON_DIR/vendor/bun/bun"
+
+# 3.5. Download static Git binary for Linux
+echo "Downloading static Git binary for Linux..."
+GIT_VERSION="2.45.0"  # Pinned version
+mkdir -p "$ELECTRON_DIR/vendor/git/bin"
+
+# Use static-git project for Linux
+GIT_DOWNLOAD="git-binaries.linux-64bit.tar.gz"
+GIT_TEMP_DIR=$(mktemp -d)
+trap "rm -rf $GIT_TEMP_DIR" EXIT
+
+# Download static Git binary
+if curl -fSL "https://github.com/darkvertex/static-git/releases/latest/download/${GIT_DOWNLOAD}" -o "$GIT_TEMP_DIR/${GIT_DOWNLOAD}" 2>/dev/null; then
+    # Extract static Git
+    tar -xzf "$GIT_TEMP_DIR/${GIT_DOWNLOAD}" -C "$GIT_TEMP_DIR" 2>/dev/null
+    # Find git binary in extracted files
+    GIT_BINARY=$(find "$GIT_TEMP_DIR" -name "git" -type f | head -1)
+    if [ -n "$GIT_BINARY" ] && [ -f "$GIT_BINARY" ]; then
+        cp "$GIT_BINARY" "$ELECTRON_DIR/vendor/git/bin/git"
+        chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+        echo "Static Git extracted to: $ELECTRON_DIR/vendor/git/bin/git"
+    else
+        echo "WARNING: git binary not found in archive. Trying system Git..."
+        if command -v git &> /dev/null; then
+            SYSTEM_GIT_PATH=$(which git)
+            cp "$SYSTEM_GIT_PATH" "$ELECTRON_DIR/vendor/git/bin/git"
+            chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+            echo "Using system Git: $SYSTEM_GIT_PATH"
+        else
+            echo "WARNING: Could not find Git. The app will try to use system Git at runtime."
+            touch "$ELECTRON_DIR/vendor/git/bin/git"
+            chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+        fi
+    fi
+else
+    # Fallback to system git if download fails
+    echo "WARNING: Failed to download static Git. Trying system Git..."
+    if command -v git &> /dev/null; then
+        SYSTEM_GIT_PATH=$(which git)
+        cp "$SYSTEM_GIT_PATH" "$ELECTRON_DIR/vendor/git/bin/git"
+        chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+        echo "Using system Git: $SYSTEM_GIT_PATH"
+    else
+        echo "WARNING: Could not download or find Git. The app will try to use system Git at runtime."
+        touch "$ELECTRON_DIR/vendor/git/bin/git"
+        chmod +x "$ELECTRON_DIR/vendor/git/bin/git"
+    fi
+fi
 
 # 4. Copy SDK from root node_modules (monorepo hoisting)
 # Note: The SDK is hoisted to root node_modules by the package manager.

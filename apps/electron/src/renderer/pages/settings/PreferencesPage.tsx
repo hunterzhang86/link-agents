@@ -8,19 +8,18 @@
  * - Auto-saves on change with debouncing
  */
 
-import * as React from 'react'
-import { useState, useEffect, useCallback, useRef } from 'react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Spinner } from '@craft-agent/ui'
 import {
-  SettingsSection,
-  SettingsCard,
-  SettingsInput,
-  SettingsTextarea,
+    SettingsCard,
+    SettingsInput,
+    SettingsSection,
+    SettingsTextarea,
 } from '@/components/settings'
-import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
+import { EditButton, EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { Spinner } from '@link-agents/ui'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -201,12 +200,12 @@ export default function PreferencesPage() {
           {/* Basic Info */}
           <SettingsSection
             title="Basic Info"
-            description="Help Craft Agent personalize responses to you."
+            description="Help Link Agent personalize responses to you."
           >
             <SettingsCard divided>
               <SettingsInput
                 label="Name"
-                description="How Craft Agent should address you."
+                description="How Link Agent should address you."
                 value={formState.name}
                 onChange={(v) => updateField('name', v)}
                 placeholder="Your name"
@@ -222,7 +221,7 @@ export default function PreferencesPage() {
               />
               <SettingsInput
                 label="Language"
-                description="Preferred language for Craft Agent's responses."
+                description="Preferred language for Link Agent's responses."
                 value={formState.language}
                 onChange={(v) => updateField('language', v)}
                 placeholder="e.g., English"
@@ -259,7 +258,7 @@ export default function PreferencesPage() {
           {/* Notes */}
           <SettingsSection
             title="Notes"
-            description="Free-form context that helps Craft Agent understand your preferences."
+            description="Free-form context that helps Link Agent understand your preferences."
             action={
               // EditPopover for AI-assisted notes editing with "Edit File" as secondary action
               preferencesPath ? (
@@ -278,7 +277,7 @@ export default function PreferencesPage() {
               <SettingsTextarea
                 value={formState.notes}
                 onChange={(v) => updateField('notes', v)}
-                placeholder="Any additional context you'd like Craft Agent to know..."
+                placeholder="Any additional context you'd like Link Agent to know..."
                 rows={5}
                 inCard
               />

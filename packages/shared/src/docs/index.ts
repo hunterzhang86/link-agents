@@ -7,10 +7,10 @@
  * Docs are stored at ~/.craft-agent/docs/ and copied on first run.
  */
 
-import { join } from 'path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
-import { existsSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from 'fs';
-import { isDebugEnabled, debug } from '../utils/debug.ts';
+import { join } from 'path';
+import { isDebugEnabled } from '../utils/debug.ts';
 import { getAppVersion } from '../version/app-version.ts';
 import { initializeSourceGuides } from './source-guides.ts';
 
@@ -155,7 +155,7 @@ export function initializeDocs(): void {
 
 const SOURCES_MD = `# Sources Configuration Guide
 
-This guide explains how to configure sources (MCP servers, APIs, local filesystems) in Craft Agent.
+This guide explains how to configure sources (MCP servers, APIs, local filesystems) in Link Agent.
 
 ## Source Setup Process
 
@@ -815,7 +815,7 @@ Use \`source_test\` with the source slug:
 
 const SKILLS_MD = `# Skills Configuration Guide
 
-This guide explains how to create and configure skills in Craft Agent.
+This guide explains how to create and configure skills in Link Agent.
 
 ## What Are Skills?
 
@@ -829,13 +829,13 @@ Skills are specialized instructions that extend Claude's capabilities for specif
 
 ## Same Format as Claude Code SDK
 
-Craft Agent uses **the identical SKILL.md format** as the Claude Code SDK. This means:
+Link Agent uses **the identical SKILL.md format** as the Claude Code SDK. This means:
 
-1. **Format compatibility**: Any skill written for Claude Code works in Craft Agent
+1. **Format compatibility**: Any skill written for Claude Code works in Link Agent
 2. **Same frontmatter fields**: \`name\`, \`description\`, \`globs\`, \`alwaysAllow\`
 3. **Same content structure**: Markdown body with instructions for Claude
 
-**What Craft Agent adds:**
+**What Link Agent adds:**
 - **Visual icons**: Display custom icons in the UI for each skill
 - **Workspace organization**: Skills are scoped to workspaces
 - **UI management**: Browse, edit, and validate skills through the interface
@@ -1300,11 +1300,11 @@ Rules are additive - they can only allow more operations, not restrict further.
 
 const THEMES_MD = `# Theme Configuration Guide
 
-This guide explains how to customize the visual theme of Craft Agent.
+This guide explains how to customize the visual theme of Link Agent.
 
 ## Overview
 
-Craft Agent uses a 6-color theme system with cascading configuration:
+Link Agent uses a 6-color theme system with cascading configuration:
 - **App-level theme**: \`~/.craft-agent/theme.json\` - Global defaults
 - **Workspace-level theme**: \`~/.craft-agent/workspaces/{id}/theme.json\` - Per-workspace overrides
 
@@ -1667,15 +1667,10 @@ const BUNDLED_DOCS: Record<string, string> = {
 export { BUNDLED_DOCS };
 
 // Re-export source guides utilities
-export {
-  parseSourceGuide,
-  getSourceGuide,
-  getSourceGuideForDomain,
-  getSourceKnowledge,
-  extractDomainFromSource,
-  extractDomainFromUrl,
-  getSourceGuidesDir,
-  BUNDLED_SOURCE_GUIDES,
-  type ParsedSourceGuide,
-  type SourceGuideFrontmatter,
-} from './source-guides.ts';
+    export {
+        BUNDLED_SOURCE_GUIDES, extractDomainFromSource,
+        extractDomainFromUrl, getSourceGuide,
+        getSourceGuideForDomain, getSourceGuidesDir, getSourceKnowledge, parseSourceGuide, type ParsedSourceGuide,
+        type SourceGuideFrontmatter
+    } from './source-guides.ts';
+

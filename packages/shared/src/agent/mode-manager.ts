@@ -15,38 +15,31 @@
 import { homedir } from 'os';
 import { parse as parseShellCommand, type ParseEntry } from 'shell-quote';
 import { debug } from '../utils/debug.ts';
-import type { PermissionsContext, MergedPermissionsConfig } from './permissions-config.ts';
 import {
-  validateBashCommand,
-  hasControlCharacters,
-  type BashValidationResult,
-  type BashValidationReason,
+    hasControlCharacters,
+    validateBashCommand
 } from './bash-validator.ts';
 import {
-  type PermissionMode,
-  type ModeConfig,
-  type CompiledApiEndpointRule,
-  type CompiledBashPattern,
-  type MismatchAnalysis,
-  PERMISSION_MODE_ORDER,
-  PERMISSION_MODE_CONFIG,
-  SAFE_MODE_CONFIG,
+    PERMISSION_MODE_CONFIG,
+    PERMISSION_MODE_ORDER,
+    SAFE_MODE_CONFIG,
+    type CompiledApiEndpointRule,
+    type CompiledBashPattern,
+    type MismatchAnalysis,
+    type ModeConfig,
+    type PermissionMode,
 } from './mode-types.ts';
+import type { MergedPermissionsConfig, PermissionsContext } from './permissions-config.ts';
 
 // Import incr-regex-package for smart pattern mismatch diagnostics
 // This library allows character-by-character matching to find WHERE a regex match failed
-import { IREGEX, DONE, MORE, FAILED } from 'incr-regex-package';
+import { IREGEX } from 'incr-regex-package';
 
 // Re-export types and config from mode-types (single source of truth)
 export {
-  type PermissionMode,
-  type ModeConfig,
-  type CompiledApiEndpointRule,
-  type CompiledBashPattern,
-  type MismatchAnalysis,
-  PERMISSION_MODE_ORDER,
-  PERMISSION_MODE_CONFIG,
-  SAFE_MODE_CONFIG,
+    PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, SAFE_MODE_CONFIG, type CompiledApiEndpointRule,
+    type CompiledBashPattern,
+    type MismatchAnalysis, type ModeConfig, type PermissionMode
 };
 
 /**
@@ -160,7 +153,7 @@ class ModeManager {
 
     debug(`[Mode] Set permission mode to ${mode} for session ${sessionId}`);
 
-    // Notify callbacks (for CraftAgent internal sync)
+    // Notify callbacks (for LinkAgent internal sync)
     const callbacks = this.callbacks.get(sessionId);
     if (callbacks?.onStateChange) {
       callbacks.onStateChange(newState);
@@ -1492,7 +1485,7 @@ export function getPermissionModesDocumentation(): string {
 
   return `## Permission Modes
 
-Craft Agent has three permission modes that control tool execution. The user can cycle through modes with SHIFT+TAB.
+Link Agent has three permission modes that control tool execution. The user can cycle through modes with SHIFT+TAB.
 
 | Mode | Color | Description |
 |------|-------|-------------|

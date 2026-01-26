@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-`@craft-agent/shared` is the core business logic package for Craft Agent. It contains:
+`@craft-agent/shared` is the core business logic package for Link Agent. It contains:
 - Agent implementation (CraftAgent, session-scoped tools, permission modes)
 - Authentication (OAuth, credentials, auth state)
 - Configuration (storage, preferences, themes, watcher)

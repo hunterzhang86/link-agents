@@ -40,5 +40,7 @@ export interface StoredConfig {
   activeWorkspaceId: string | null;
   activeSessionId: string | null;  // Currently active session (primary scope)
   model?: string;
+  marketplaceUrl?: string; // Custom marketplace URL (defaults to anthropics/skills)
+  marketplaceCacheTTL?: number; // Cache TTL in milliseconds (defaults to 24 hours)
 }
 

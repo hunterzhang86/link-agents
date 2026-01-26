@@ -1,7 +1,7 @@
 /**
  * Claude Code Session Converter
  *
- * Converts Claude Code sessions to Craft Agents format.
+ * Converts Claude Code sessions to Link Agents format.
  */
 
 import type {
@@ -9,7 +9,7 @@ import type {
   ClaudeCodeTranscriptLine,
 } from './claude-code-types.ts';
 import type { StoredSession, SessionTokenUsage } from './types.ts';
-import type { StoredMessage } from '@craft-agent/core/types';
+import type { StoredMessage } from '@link-agents/core/types';
 
 export class ClaudeCodeConverter {
   /**
@@ -32,7 +32,7 @@ export class ClaudeCodeConverter {
   }
 
   /**
-   * Convert Claude Code session to Craft Agents format
+   * Convert Claude Code session to Link Agents format
    */
   convertSession(
     claudeSession: ClaudeCodeSession,

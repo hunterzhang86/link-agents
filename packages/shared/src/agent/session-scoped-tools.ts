@@ -18,46 +18,44 @@
  */
 
 import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk';
-import { z } from 'zod';
 import { existsSync, readFileSync } from 'fs';
 import { basename } from 'path';
-import { getSessionPlansPath } from '../sessions/storage.ts';
-import { debug } from '../utils/debug.ts';
-import { getCredentialManager } from '../credentials/index.ts';
+import { z } from 'zod';
 import {
-  validateConfig,
-  validateSource,
-  validateAllSources,
-  validateStatuses,
-  validatePreferences,
-  validateAll,
-  validateSkill,
-  validateAllSkills,
-  validateWorkspacePermissions,
-  validateSourcePermissions,
-  validateAllPermissions,
-  formatValidationResult,
-} from '../config/validators.ts';
-import { PERMISSION_MODE_CONFIG } from './mode-types.ts';
-import {
-  validateMcpConnection,
-  validateStdioMcpConnection,
-  getValidationErrorMessage,
-} from '../mcp/validation.ts';
-import {
-  getAnthropicApiKey,
-  getClaudeOAuthToken,
+    getAnthropicApiKey,
+    getClaudeOAuthToken,
 } from '../config/storage.ts';
 import {
-  loadSourceConfig,
-  saveSourceConfig,
-  getSourcePath,
+    formatValidationResult,
+    validateAll,
+    validateAllPermissions,
+    validateAllSources,
+    validateConfig,
+    validatePreferences,
+    validateSkill,
+    validateSource,
+    validateSourcePermissions,
+    validateStatuses
+} from '../config/validators.ts';
+import { getCredentialManager } from '../credentials/index.ts';
+import { DOC_REFS } from '../docs/index.ts';
+import {
+    getValidationErrorMessage,
+    validateMcpConnection,
+    validateStdioMcpConnection,
+} from '../mcp/validation.ts';
+import { getSessionPlansPath } from '../sessions/storage.ts';
+import { buildAuthorizationHeader } from '../sources/api-tools.ts';
+import { getSourceCredentialManager } from '../sources/index.ts';
+import {
+    getSourcePath,
+    loadSourceConfig,
+    saveSourceConfig,
 } from '../sources/storage.ts';
 import type { FolderSourceConfig, LoadedSource } from '../sources/types.ts';
-import { getSourceCredentialManager } from '../sources/index.ts';
-import { inferGoogleServiceFromUrl, inferSlackServiceFromUrl, inferMicrosoftServiceFromUrl, isApiOAuthProvider, type GoogleService, type SlackService, type MicrosoftService } from '../sources/types.ts';
-import { buildAuthorizationHeader } from '../sources/api-tools.ts';
-import { DOC_REFS } from '../docs/index.ts';
+import { inferGoogleServiceFromUrl, inferMicrosoftServiceFromUrl, inferSlackServiceFromUrl, isApiOAuthProvider, type GoogleService, type MicrosoftService, type SlackService } from '../sources/types.ts';
+import { debug } from '../utils/debug.ts';
+import { PERMISSION_MODE_CONFIG } from './mode-types.ts';
 
 // ============================================================
 // Session-Scoped Tool Callbacks
@@ -185,7 +183,7 @@ const sessionScopedToolCallbackRegistry = new Map<string, SessionScopedToolCallb
 
 /**
  * Register callbacks for a session's tools.
- * Called by CraftAgent when initializing.
+ * Called by LinkAgent when initializing.
  */
 export function registerSessionScopedToolCallbacks(
   sessionId: string,
@@ -197,7 +195,7 @@ export function registerSessionScopedToolCallbacks(
 
 /**
  * Unregister callbacks for a session.
- * Called by CraftAgent on dispose.
+ * Called by LinkAgent on dispose.
  */
 export function unregisterSessionScopedToolCallbacks(sessionId: string): void {
   sessionScopedToolCallbackRegistry.delete(sessionId);
@@ -353,7 +351,7 @@ Brief description of what this plan accomplishes.
 export function createConfigValidateTool(sessionId: string, workspaceRootPath: string) {
   return tool(
     'config_validate',
-    `Validate Craft Agent configuration files.
+    `Validate Link Agent configuration files.
 
 Use this after editing configuration files to check for errors before they take effect.
 Returns structured validation results with errors, warnings, and suggestions.

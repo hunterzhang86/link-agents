@@ -95,10 +95,26 @@ export function ShikiCodeViewer({
       const resolvedShikiTheme = shikiTheme || (theme === 'dark' ? 'github-dark' : 'github-light')
       const lang = isValidLanguage(resolvedLang) ? resolvedLang : 'text'
 
+      console.log('[ShikiCodeViewer] Starting highlight:', {
+        filePath,
+        resolvedLang,
+        lang,
+        theme,
+        shikiTheme,
+        resolvedShikiTheme,
+        codeLength: code.length,
+        codeToHtmlAvailable: typeof codeToHtml,
+      })
+
       try {
         const html = await codeToHtml(code, {
           lang,
           theme: resolvedShikiTheme,
+        })
+
+        console.log('[ShikiCodeViewer] Highlighting succeeded:', {
+          htmlLength: html.length,
+          htmlPreview: html.substring(0, 200),
         })
 
         if (!cancelled) {
@@ -112,7 +128,12 @@ export function ShikiCodeViewer({
           }
         }
       } catch (error) {
-        console.warn(`Shiki highlighting failed for language "${resolvedLang}":`, error)
+        console.error('[ShikiCodeViewer] Highlighting failed:', {
+          resolvedLang,
+          lang,
+          theme: resolvedShikiTheme,
+          error,
+        })
         if (!cancelled) {
           setHighlighted(null)
           setIsLoading(false)
@@ -130,12 +151,19 @@ export function ShikiCodeViewer({
     return () => {
       cancelled = true
     }
-  }, [code, resolvedLang, theme, shikiTheme, onReady])
+  }, [code, resolvedLang, theme, shikiTheme, onReady, filePath])
 
   // Theme-aware colors
   const backgroundColor = theme === 'dark' ? '#1e1e1e' : '#ffffff'
   const lineNumberColor = theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'
   const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'
+
+  console.log('[ShikiCodeViewer] Render state:', {
+    isLoading,
+    hasHighlighted: !!highlighted,
+    highlightedLength: highlighted?.length,
+    willShowFallback: isLoading || !highlighted,
+  })
 
   return (
     <div

@@ -1,6 +1,6 @@
-# Craft Agent Electron App
+# Link Agent Electron App
 
-The primary desktop interface for Craft Agent, built with Electron + React. Provides a multi-session inbox with chat interface for interacting with Claude via Craft workspaces.
+The primary desktop interface for Link Agent, built with Electron + React. Provides a multi-session inbox with chat interface for interacting with Claude via Craft workspaces.
 
 ## Quick Start
 

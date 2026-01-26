@@ -9,7 +9,7 @@ import * as React from 'react'
 import { AlertCircle } from 'lucide-react'
 import { PanelHeader, type PanelHeaderProps } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@link-agents/ui'
 import { cn } from '@/lib/utils'
 import { CHAT_LAYOUT } from '@/config/layout'
 
@@ -41,6 +41,7 @@ export interface Info_PageHeroProps {
 export interface Info_PageContentProps {
   children: React.ReactNode
   className?: string
+  containerClassName?: string
 }
 
 function Info_PageRoot({
@@ -135,7 +136,7 @@ function Info_PageHero({ avatar, title, tagline, className }: Info_PageHeroProps
   )
 }
 
-function Info_PageContent({ children, className }: Info_PageContentProps) {
+function Info_PageContent({ children, className, containerClassName }: Info_PageContentProps) {
   return (
     <div className="relative flex-1 min-h-0">
       {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
@@ -147,7 +148,13 @@ function Info_PageContent({ children, className }: Info_PageContentProps) {
         }}
       >
         <ScrollArea className="h-full">
-          <div className={cn(CHAT_LAYOUT.maxWidth, 'mx-auto px-5 pt-6 pb-10')}>
+          <div
+            className={cn(
+              CHAT_LAYOUT.maxWidth,
+              'mx-auto px-5 pt-6 pb-10',
+              containerClassName
+            )}
+          >
             <div className={cn('space-y-6', className)}>{children}</div>
           </div>
         </ScrollArea>

@@ -2,12 +2,12 @@
  * Header - App header with branding and controls
  */
 
-import { Sun, Moon, X } from 'lucide-react'
+import { Moon, Sun, X } from 'lucide-react'
 
 /**
- * CraftAgentLogo - The Craft Agent "C" logo
+ * LinkAgentLogo - The Link Agent "C" logo
  */
-function CraftAgentLogo({ className }: { className?: string }) {
+function LinkAgentLogo({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -40,9 +40,9 @@ export function Header({ hasSession, sessionTitle, isDark, onToggleTheme, onClea
       <a
         href="https://agents.craft.do"
         className="hover:opacity-80 transition-opacity"
-        title="Craft Agent"
+        title="Link Agent"
       >
-        <CraftAgentLogo className="w-6 h-6 text-[#9570BE]" />
+        <LinkAgentLogo className="w-6 h-6 text-[#9570BE]" />
       </a>
 
       {/* Session title - centered */}

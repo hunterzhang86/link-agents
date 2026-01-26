@@ -55,10 +55,17 @@ export function getDefaultOptions(): Partial<Options> {
         };
         // Add interceptor preload if path is set (needed for cache TTL patching)
         if (customInterceptorPath) {
-            if (executable === 'node') {
-                // Node does not support --preload (bun-only), so skip instead of failing
-                debug('Skipping interceptor preload because node executable does not support --preload');
+            // Check if executable is a path (not just 'bun' or 'node' command)
+            const isExecutablePath = customExecutable && (customExecutable.includes('/') || customExecutable.includes('\\'));
+            // Check if it's Electron or node (both don't support --preload)
+            const isElectron = isExecutablePath && (customExecutable.toLowerCase().includes('electron') || customExecutable.toLowerCase().includes('electron.app'));
+            const isNode = executable === 'node' || (isExecutablePath && (customExecutable.includes('node') || customExecutable.includes('node.exe')));
+            
+            if (isNode || isElectron) {
+                // Node and Electron do not support --preload (bun-only), so skip instead of failing
+                debug(`Skipping interceptor preload because ${isElectron ? 'Electron' : 'node'} executable does not support --preload`);
             } else {
+                // Assume it's bun (or bun-compatible) and add --preload
                 options.executableArgs = ['--preload', customInterceptorPath];
             }
         }

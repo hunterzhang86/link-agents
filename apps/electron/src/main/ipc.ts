@@ -9,12 +9,12 @@ import { ipcLog, windowLog } from './logger'
 import { WindowManager } from './window-manager'
 import { registerOnboardingHandlers } from './onboarding'
 import { IPC_CHANNELS, type FileAttachment, type StoredAttachment, type AuthType, type BillingMethodInfo, type SendMessageOptions } from '../shared/types'
-import { readFileAttachment, perf, validateImageForClaudeAPI, IMAGE_LIMITS } from '@craft-agent/shared/utils'
-import { getAuthType, setAuthType, getPreferencesPath, getModel, setModel, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, type Workspace } from '@craft-agent/shared/config'
-import { getSessionAttachmentsPath } from '@craft-agent/shared/sessions'
-import { loadWorkspaceSources, getSourcesBySlugs, type LoadedSource } from '@craft-agent/shared/sources'
-import { isValidThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
+import { readFileAttachment, perf, validateImageForClaudeAPI, IMAGE_LIMITS } from '@link-agents/shared/utils'
+import { getAuthType, setAuthType, getPreferencesPath, getModel, setModel, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, type Workspace } from '@link-agents/shared/config'
+import { getSessionAttachmentsPath } from '@link-agents/shared/sessions'
+import { loadWorkspaceSources, getSourcesBySlugs, type LoadedSource } from '@link-agents/shared/sources'
+import { isValidThinkingLevel } from '@link-agents/shared/agent/thinking-levels'
+import { getCredentialManager } from '@link-agents/shared/credentials'
 import { MarkItDown } from 'markitdown-js'
 
 /**
@@ -405,8 +405,8 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   })
 
   // Open native file dialog for selecting files to attach
-  ipcMain.handle(IPC_CHANNELS.OPEN_FILE_DIALOG, async () => {
-    const result = await dialog.showOpenDialog({
+  ipcMain.handle(IPC_CHANNELS.OPEN_FILE_DIALOG, async (_event, options?: Electron.OpenDialogOptions) => {
+    const defaultOptions: Electron.OpenDialogOptions = {
       properties: ['openFile', 'multiSelections'],
       filters: [
         { name: 'All Supported', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'docx', 'xlsx', 'pptx', 'doc', 'xls', 'ppt', 'txt', 'md', 'json', 'js', 'ts', 'tsx', 'jsx', 'py', 'css', 'html', 'xml', 'yaml', 'yml'] },
@@ -414,8 +414,13 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
         { name: 'Documents', extensions: ['pdf', 'docx', 'xlsx', 'pptx', 'doc', 'xls', 'ppt', 'txt', 'md'] },
         { name: 'Code', extensions: ['js', 'ts', 'tsx', 'jsx', 'py', 'json', 'css', 'html', 'xml', 'yaml', 'yml'] },
       ]
+    }
+
+    const result = await dialog.showOpenDialog({
+      ...defaultOptions,
+      ...options
     })
-    return result.canceled ? [] : result.filePaths
+    return result
   })
 
   // Read file and return as FileAttachment with Quick Look thumbnail
@@ -690,13 +695,13 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
   // Dismiss update for this version (persists across restarts)
   ipcMain.handle(IPC_CHANNELS.UPDATE_DISMISS, async (_event, version: string) => {
-    const { setDismissedUpdateVersion } = await import('@craft-agent/shared/config')
+    const { setDismissedUpdateVersion } = await import('@link-agents/shared/config')
     setDismissedUpdateVersion(version)
   })
 
   // Get dismissed version
   ipcMain.handle(IPC_CHANNELS.UPDATE_GET_DISMISSED, async () => {
-    const { getDismissedUpdateVersion } = await import('@craft-agent/shared/config')
+    const { getDismissedUpdateVersion } = await import('@link-agents/shared/config')
     return getDismissedUpdateVersion()
   })
 
@@ -871,7 +876,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
         }
       } else if (authType === 'oauth_token') {
         // Import full credentials including refresh token and expiry from Claude CLI
-        const { getExistingClaudeCredentials } = await import('@craft-agent/shared/auth')
+        const { getExistingClaudeCredentials } = await import('@link-agents/shared/auth')
         const cliCreds = getExistingClaudeCredentials()
         if (cliCreds) {
           await manager.setClaudeOAuthCredentials({
@@ -949,7 +954,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     }
 
     // Load workspace config
-    const { loadWorkspaceConfig } = await import('@craft-agent/shared/workspaces')
+    const { loadWorkspaceConfig } = await import('@link-agents/shared/workspaces')
     const config = loadWorkspaceConfig(workspace.rootPath)
 
     return {
@@ -974,7 +979,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       throw new Error(`Invalid workspace setting key: ${key}. Valid keys: ${validKeys.join(', ')}`)
     }
 
-    const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@craft-agent/shared/workspaces')
+    const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@link-agents/shared/workspaces')
     const config = loadWorkspaceConfig(workspace.rootPath)
     if (!config) {
       throw new Error(`Failed to load workspace config: ${workspaceId}`)
@@ -1225,10 +1230,10 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   })
 
   // Create a new source
-  ipcMain.handle(IPC_CHANNELS.SOURCES_CREATE, async (_event, workspaceId: string, config: Partial<import('@craft-agent/shared/sources').CreateSourceInput>) => {
+  ipcMain.handle(IPC_CHANNELS.SOURCES_CREATE, async (_event, workspaceId: string, config: Partial<import('@link-agents/shared/sources').CreateSourceInput>) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { createSource } = await import('@craft-agent/shared/sources')
+    const { createSource } = await import('@link-agents/shared/sources')
     return createSource(workspace.rootPath, {
       name: config.name || 'New Source',
       provider: config.provider || 'custom',
@@ -1244,7 +1249,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   ipcMain.handle(IPC_CHANNELS.SOURCES_DELETE, async (_event, workspaceId: string, sourceSlug: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { deleteSource } = await import('@craft-agent/shared/sources')
+    const { deleteSource } = await import('@link-agents/shared/sources')
     deleteSource(workspace.rootPath, sourceSlug)
   })
 
@@ -1255,7 +1260,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       if (!workspace) {
         return { success: false, error: `Workspace not found: ${workspaceId}` }
       }
-      const { loadSource, getSourceCredentialManager } = await import('@craft-agent/shared/sources')
+      const { loadSource, getSourceCredentialManager } = await import('@link-agents/shared/sources')
 
       const source = loadSource(workspace.rootPath, sourceSlug)
       if (!source || source.config.type !== 'mcp' || !source.config.mcp?.url) {
@@ -1290,7 +1295,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   ipcMain.handle(IPC_CHANNELS.SOURCES_SAVE_CREDENTIALS, async (_event, workspaceId: string, sourceSlug: string, credential: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { loadSource, getSourceCredentialManager } = await import('@craft-agent/shared/sources')
+    const { loadSource, getSourceCredentialManager } = await import('@link-agents/shared/sources')
 
     const source = loadSource(workspace.rootPath, sourceSlug)
     if (!source) {
@@ -1311,7 +1316,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     // Load raw JSON file (not normalized) for UI display
     const { existsSync, readFileSync } = await import('fs')
-    const { getSourcePermissionsPath } = await import('@craft-agent/shared/agent')
+    const { getSourcePermissionsPath } = await import('@link-agents/shared/agent')
     const path = getSourcePermissionsPath(workspace.rootPath, sourceSlug)
 
     if (!existsSync(path)) return null
@@ -1332,7 +1337,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     // Load raw JSON file (not normalized) for UI display
     const { existsSync, readFileSync } = await import('fs')
-    const { getWorkspacePermissionsPath } = await import('@craft-agent/shared/agent')
+    const { getWorkspacePermissionsPath } = await import('@link-agents/shared/agent')
     const path = getWorkspacePermissionsPath(workspace.rootPath)
 
     if (!existsSync(path)) return null
@@ -1350,7 +1355,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   // Returns raw JSON for UI display (patterns with comments), plus the file path
   ipcMain.handle(IPC_CHANNELS.DEFAULT_PERMISSIONS_GET, async () => {
     const { existsSync, readFileSync } = await import('fs')
-    const { getAppPermissionsDir } = await import('@craft-agent/shared/agent')
+    const { getAppPermissionsDir } = await import('@link-agents/shared/agent')
     const { join } = await import('path')
 
     const defaultPath = join(getAppPermissionsDir(), 'default.json')
@@ -1390,7 +1395,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       }
 
       // Create unified MCP client for both stdio and HTTP transports
-      const { CraftMcpClient } = await import('@craft-agent/shared/mcp')
+      const { CraftMcpClient } = await import('@link-agents/shared/mcp')
       let client: InstanceType<typeof CraftMcpClient>
 
       if (source.config.mcp.transport === 'stdio') {
@@ -1434,7 +1439,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       await client.close()
 
       // Load permissions patterns
-      const { loadSourcePermissionsConfig, permissionsConfigCache } = await import('@craft-agent/shared/agent')
+      const { loadSourcePermissionsConfig, permissionsConfigCache } = await import('@link-agents/shared/agent')
       const permissionsConfig = loadSourcePermissionsConfig(workspace.rootPath, sourceSlug)
 
       // Get merged permissions config
@@ -1481,7 +1486,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       ipcLog.error(`SKILLS_GET: Workspace not found: ${workspaceId}`)
       return []
     }
-    const { loadWorkspaceSkills } = await import('@craft-agent/shared/skills')
+    const { loadWorkspaceSkills } = await import('@link-agents/shared/skills')
     const skills = loadWorkspaceSkills(workspace.rootPath)
     ipcLog.info(`SKILLS_GET: Loaded ${skills.length} skills from ${workspace.rootPath}`)
     return skills
@@ -1497,7 +1502,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     const { join } = await import('path')
     const { readdirSync, statSync } = await import('fs')
-    const { getWorkspaceSkillsPath } = await import('@craft-agent/shared/workspaces')
+    const { getWorkspaceSkillsPath } = await import('@link-agents/shared/workspaces')
 
     const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
     const skillDir = join(skillsDir, skillSlug)
@@ -1550,7 +1555,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { deleteSkill } = await import('@craft-agent/shared/skills')
+    const { deleteSkill } = await import('@link-agents/shared/skills')
     deleteSkill(workspace.rootPath, skillSlug)
     ipcLog.info(`Deleted skill: ${skillSlug}`)
   })
@@ -1562,7 +1567,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     const { join } = await import('path')
     const { shell } = await import('electron')
-    const { getWorkspaceSkillsPath } = await import('@craft-agent/shared/workspaces')
+    const { getWorkspaceSkillsPath } = await import('@link-agents/shared/workspaces')
 
     const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
     const skillFile = join(skillsDir, skillSlug, 'SKILL.md')
@@ -1576,11 +1581,327 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     const { join } = await import('path')
     const { shell } = await import('electron')
-    const { getWorkspaceSkillsPath } = await import('@craft-agent/shared/workspaces')
+    const { getWorkspaceSkillsPath } = await import('@link-agents/shared/workspaces')
 
     const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
     const skillDir = join(skillsDir, skillSlug)
     await shell.showItemInFolder(skillDir)
+  })
+
+  // Update skill content and metadata
+  ipcMain.handle(IPC_CHANNELS.SKILLS_UPDATE_CONTENT, async (_event, workspaceId: string, skillSlug: string, metadata: any, content: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { updateSkill } = await import('@link-agents/shared/skills/storage')
+      const updatedSkill = updateSkill(workspace.rootPath, skillSlug, metadata, content)
+
+      if (!updatedSkill) {
+        return { success: false, error: 'Skill not found' }
+      }
+
+      ipcLog.info(`Updated skill: ${skillSlug}`)
+      return { success: true, skill: updatedSkill }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error(`Failed to update skill ${skillSlug}:`, errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Read a file from skill directory
+  ipcMain.handle(IPC_CHANNELS.SKILLS_READ_FILE, async (_event: any, workspaceId: string, skillSlug: string, relativePath: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { join } = await import('path')
+      const { readFileSync, existsSync } = await import('fs')
+      const { getWorkspaceSkillsPath } = await import('@link-agents/shared/workspaces')
+
+      const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
+      const filePath = join(skillsDir, skillSlug, relativePath)
+
+      // Security check: ensure path is within skill directory
+      const skillDir = join(skillsDir, skillSlug)
+      if (!filePath.startsWith(skillDir)) {
+        return { success: false, error: 'Invalid file path' }
+      }
+
+      if (!existsSync(filePath)) {
+        return { success: false, error: 'File not found' }
+      }
+
+      const content = readFileSync(filePath, 'utf-8')
+      return { success: true, content }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error(`Failed to read skill file ${relativePath}:`, errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Write a file to skill directory
+  ipcMain.handle(IPC_CHANNELS.SKILLS_WRITE_FILE, async (_event: any, workspaceId: string, skillSlug: string, relativePath: string, content: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { join, dirname } = await import('node:path')
+      const { writeFileSync, mkdirSync, existsSync } = await import('node:fs')
+      const { getWorkspaceSkillsPath } = await import('@link-agents/shared/workspaces')
+
+      const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
+      const filePath = join(skillsDir, skillSlug, relativePath)
+
+      // Security check: ensure path is within skill directory
+      const skillDir = join(skillsDir, skillSlug)
+      if (!filePath.startsWith(skillDir)) {
+        return { success: false, error: 'Invalid file path' }
+      }
+
+      // Ensure directory exists
+      const fileDir = dirname(filePath)
+      if (!existsSync(fileDir)) {
+        mkdirSync(fileDir, { recursive: true })
+      }
+
+      writeFileSync(filePath, content, 'utf-8')
+      ipcLog.info(`Wrote skill file: ${relativePath}`)
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error(`Failed to write skill file ${relativePath}:`, errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Delete a file from skill directory
+  ipcMain.handle(IPC_CHANNELS.SKILLS_DELETE_FILE, async (_event: any, workspaceId: string, skillSlug: string, relativePath: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { join } = await import('node:path')
+      const { rmSync, existsSync } = await import('node:fs')
+      const { getWorkspaceSkillsPath } = await import('@link-agents/shared/workspaces')
+
+      const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
+      const filePath = join(skillsDir, skillSlug, relativePath)
+
+      // Security check: ensure path is within skill directory
+      const skillDir = join(skillsDir, skillSlug)
+      if (!filePath.startsWith(skillDir)) {
+        return { success: false, error: 'Invalid file path' }
+      }
+
+      // Prevent deletion of SKILL.md
+      if (relativePath === 'SKILL.md') {
+        return { success: false, error: 'Cannot delete SKILL.md' }
+      }
+
+      if (!existsSync(filePath)) {
+        return { success: false, error: 'File not found' }
+      }
+
+      rmSync(filePath, { recursive: true })
+      ipcLog.info(`Deleted skill file: ${relativePath}`)
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error(`Failed to delete skill file ${relativePath}:`, errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // ============================================================
+  // Skills Marketplace
+  // ============================================================
+
+  // Import skill from ZIP
+  ipcMain.handle(IPC_CHANNELS.SKILLS_IMPORT_ZIP, async (_event, workspaceId: string, zipPath: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const validatedPath = await validateFilePath(zipPath)
+      const { importSkillFromZip } = await import('@link-agents/shared/skills/import')
+      const skill = await importSkillFromZip(workspace.rootPath, validatedPath)
+      ipcLog.info(`Imported skill from ZIP: ${skill.slug}`)
+      return { success: true, skill }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error('SKILLS_IMPORT_ZIP error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Import skill from folder
+  ipcMain.handle(IPC_CHANNELS.SKILLS_IMPORT_FOLDER, async (_event, workspaceId: string, folderPath: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const validatedPath = await validateFilePath(folderPath)
+      const { importSkillFromFolder } = await import('@link-agents/shared/skills/import')
+      const skill = await importSkillFromFolder(workspace.rootPath, validatedPath)
+      ipcLog.info(`Imported skill from folder: ${skill.slug}`)
+      return { success: true, skill }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error('SKILLS_IMPORT_FOLDER error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Import skill from Git
+  ipcMain.handle(IPC_CHANNELS.SKILLS_IMPORT_GIT, async (_event, workspaceId: string, gitUrl: string, branch?: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { importSkillFromGit } = await import('@link-agents/shared/skills/import')
+      const skill = await importSkillFromGit(workspace.rootPath, gitUrl, branch)
+      ipcLog.info(`Imported skill from Git: ${skill.slug}`)
+      return { success: true, skill }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error('SKILLS_IMPORT_GIT error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Import skill from file
+  ipcMain.handle(IPC_CHANNELS.SKILLS_IMPORT_FILE, async (_event, workspaceId: string, filePath: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const validatedPath = await validateFilePath(filePath)
+      const { importSkillFromFile } = await import('@link-agents/shared/skills/import')
+      const skill = await importSkillFromFile(workspace.rootPath, validatedPath)
+      ipcLog.info(`Imported skill from file: ${skill.slug}`)
+      return { success: true, skill }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error('SKILLS_IMPORT_FILE error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Import skill from URL
+  ipcMain.handle(IPC_CHANNELS.SKILLS_IMPORT_URL, async (_event, workspaceId: string, url: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { importSkillFromUrl } = await import('@link-agents/shared/skills/import')
+      const skill = await importSkillFromUrl(workspace.rootPath, url)
+      ipcLog.info(`Imported skill from URL: ${skill.slug}`)
+      return { success: true, skill }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      ipcLog.error('SKILLS_IMPORT_URL error:', errorMessage)
+      return { success: false, error: errorMessage }
+    }
+  })
+
+  // Get skills.sh catalog
+  ipcMain.handle(IPC_CHANNELS.SKILLS_GET_CATALOG, async (_event, forceRefresh = false) => {
+    try {
+      const { getSkillsCatalog } = await import('@link-agents/shared/skills/catalog')
+      const { getMarketplaceUrl, getMarketplaceCacheTTL } = await import('@link-agents/shared/config/storage')
+      const marketplaceUrl = getMarketplaceUrl()
+      const cacheTTL = getMarketplaceCacheTTL()
+      const catalog = await getSkillsCatalog(forceRefresh, marketplaceUrl, cacheTTL)
+      ipcLog.info(`SKILLS_GET_CATALOG: Loaded ${catalog.skills.length} skills from catalog`)
+      return { success: true, catalog }
+    } catch (error) {
+      ipcLog.error('SKILLS_GET_CATALOG error:', error)
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // Check for skill updates
+  ipcMain.handle(IPC_CHANNELS.SKILLS_CHECK_UPDATES, async (_event, workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { loadWorkspaceSkills } = await import('@link-agents/shared/skills')
+      const { getSkillsCatalog } = await import('@link-agents/shared/skills/catalog')
+      const { checkAllSkillUpdates } = await import('@link-agents/shared/skills/updates')
+      const { getMarketplaceUrl, getMarketplaceCacheTTL } = await import('@link-agents/shared/config/storage')
+
+      const skills = loadWorkspaceSkills(workspace.rootPath)
+      const marketplaceUrl = getMarketplaceUrl()
+      const cacheTTL = getMarketplaceCacheTTL()
+      const catalog = await getSkillsCatalog(false, marketplaceUrl, cacheTTL)
+      const updatesMap = await checkAllSkillUpdates(skills, catalog)
+
+      const updates = Array.from(updatesMap.entries()).map(([slug, hasUpdate]) => ({
+        slug,
+        hasUpdate,
+      }))
+
+      ipcLog.info(`SKILLS_CHECK_UPDATES: Checked ${updates.length} skills`)
+      return { success: true, updates }
+    } catch (error) {
+      ipcLog.error('SKILLS_CHECK_UPDATES error:', error)
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // Update skill
+  ipcMain.handle(IPC_CHANNELS.SKILLS_UPDATE, async (_event, workspaceId: string, skillSlug: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      return { success: false, error: 'Workspace not found' }
+    }
+
+    try {
+      const { loadSkill } = await import('@link-agents/shared/skills')
+      const { getSkillsCatalog } = await import('@link-agents/shared/skills/catalog')
+      const { updateSkill } = await import('@link-agents/shared/skills/updates')
+      const { getMarketplaceUrl, getMarketplaceCacheTTL } = await import('@link-agents/shared/config/storage')
+
+      const skill = loadSkill(workspace.rootPath, skillSlug)
+      if (!skill) {
+        return { success: false, error: 'Skill not found' }
+      }
+
+      const marketplaceUrl = getMarketplaceUrl()
+      const cacheTTL = getMarketplaceCacheTTL()
+      const catalog = await getSkillsCatalog(false, marketplaceUrl, cacheTTL)
+      const updatedSkill = await updateSkill(workspace.rootPath, skill, catalog)
+
+      ipcLog.info(`Updated skill: ${skillSlug}`)
+      return { success: true, skill: updatedSkill }
+    } catch (error) {
+      ipcLog.error('SKILLS_UPDATE error:', error)
+      return { success: false, error: String(error) }
+    }
   })
 
   // ============================================================
@@ -1590,7 +1911,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   // Get all Claude Code sessions from ~/.claude/
   ipcMain.handle(IPC_CHANNELS.CLAUDE_CODE_GET_SESSIONS, async () => {
     try {
-      const { ClaudeCodeSessionReader } = await import('@craft-agent/shared/sessions')
+      const { ClaudeCodeSessionReader } = await import('@link-agents/shared/sessions')
       const reader = new ClaudeCodeSessionReader()
       const sessions = await reader.listSessions()
       ipcLog.info(`CLAUDE_CODE_GET_SESSIONS: Found ${sessions.length} sessions`)
@@ -1601,10 +1922,10 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     }
   })
 
-  // Import a Claude Code session into Craft Agents
+  // Import a Claude Code session into Link Agents
   ipcMain.handle(IPC_CHANNELS.CLAUDE_CODE_IMPORT_SESSION, async (_event, sessionId: string, workspaceRootPath: string) => {
     try {
-      const { ClaudeCodeSessionReader, ClaudeCodeConverter, saveSession } = await import('@craft-agent/shared/sessions')
+      const { ClaudeCodeSessionReader, ClaudeCodeConverter, saveSession } = await import('@link-agents/shared/sessions')
 
       // Load full session
       const reader = new ClaudeCodeSessionReader()
@@ -1633,10 +1954,10 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     }
   })
 
-  // Export a Craft Agents session back to Claude Code
+  // Export a Link Agents session back to Claude Code
   ipcMain.handle(IPC_CHANNELS.CLAUDE_CODE_EXPORT_SESSION, async (_event, sessionId: string, projectName?: string) => {
     try {
-      const { ClaudeCodeWriter } = await import('@craft-agent/shared/sessions')
+      const { ClaudeCodeWriter } = await import('@link-agents/shared/sessions')
       const fs = await import('fs')
       const path = await import('path')
 
@@ -1685,7 +2006,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { listStatuses } = await import('@craft-agent/shared/statuses')
+    const { listStatuses } = await import('@link-agents/shared/statuses')
     return listStatuses(workspace.rootPath)
   })
 
@@ -1825,30 +2146,30 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   // ============================================================
 
   ipcMain.handle(IPC_CHANNELS.THEME_GET_APP, async () => {
-    const { loadAppTheme } = await import('@craft-agent/shared/config/storage')
+    const { loadAppTheme } = await import('@link-agents/shared/config/storage')
     return loadAppTheme()
   })
 
   // Preset themes (app-level)
   ipcMain.handle(IPC_CHANNELS.THEME_GET_PRESETS, async () => {
-    const { loadPresetThemes } = await import('@craft-agent/shared/config/storage')
+    const { loadPresetThemes } = await import('@link-agents/shared/config/storage')
     // Pass bundled themes path from Electron resources (dist/resources/themes)
     const bundledThemesDir = join(__dirname, 'resources/themes')
     return loadPresetThemes(bundledThemesDir)
   })
 
   ipcMain.handle(IPC_CHANNELS.THEME_LOAD_PRESET, async (_event, themeId: string) => {
-    const { loadPresetTheme } = await import('@craft-agent/shared/config/storage')
+    const { loadPresetTheme } = await import('@link-agents/shared/config/storage')
     return loadPresetTheme(themeId)
   })
 
   ipcMain.handle(IPC_CHANNELS.THEME_GET_COLOR_THEME, async () => {
-    const { getColorTheme } = await import('@craft-agent/shared/config/storage')
+    const { getColorTheme } = await import('@link-agents/shared/config/storage')
     return getColorTheme()
   })
 
   ipcMain.handle(IPC_CHANNELS.THEME_SET_COLOR_THEME, async (_event, themeId: string) => {
-    const { setColorTheme } = await import('@craft-agent/shared/config/storage')
+    const { setColorTheme } = await import('@link-agents/shared/config/storage')
     setColorTheme(themeId)
   })
 
@@ -1868,7 +2189,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
   // Logo URL resolution (uses Node.js filesystem cache for provider domains)
   ipcMain.handle(IPC_CHANNELS.LOGO_GET_URL, async (_event, serviceUrl: string, provider?: string) => {
-    const { getLogoUrl } = await import('@craft-agent/shared/utils/logo')
+    const { getLogoUrl } = await import('@link-agents/shared/utils/logo')
     const result = getLogoUrl(serviceUrl, provider)
     console.log(`[logo] getLogoUrl("${serviceUrl}", "${provider}") => "${result}"`)
     return result
@@ -1886,13 +2207,13 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
   // Get notifications enabled setting
   ipcMain.handle(IPC_CHANNELS.NOTIFICATION_GET_ENABLED, async () => {
-    const { getNotificationsEnabled } = await import('@craft-agent/shared/config/storage')
+    const { getNotificationsEnabled } = await import('@link-agents/shared/config/storage')
     return getNotificationsEnabled()
   })
 
   // Set notifications enabled setting (also triggers permission request if enabling)
   ipcMain.handle(IPC_CHANNELS.NOTIFICATION_SET_ENABLED, async (_event, enabled: boolean) => {
-    const { setNotificationsEnabled } = await import('@craft-agent/shared/config/storage')
+    const { setNotificationsEnabled } = await import('@link-agents/shared/config/storage')
     setNotificationsEnabled(enabled)
 
     // If enabling, trigger a notification to request macOS permission
@@ -1900,6 +2221,30 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       const { showNotification } = await import('./notifications')
       showNotification('Notifications enabled', 'You will be notified when tasks complete.', '', '')
     }
+  })
+
+  // Get marketplace URL
+  ipcMain.handle(IPC_CHANNELS.MARKETPLACE_GET_URL, async () => {
+    const { getMarketplaceUrl } = await import('@link-agents/shared/config/storage')
+    return getMarketplaceUrl()
+  })
+
+  // Set marketplace URL
+  ipcMain.handle(IPC_CHANNELS.MARKETPLACE_SET_URL, async (_event, url: string) => {
+    const { setMarketplaceUrl } = await import('@link-agents/shared/config/storage')
+    setMarketplaceUrl(url)
+  })
+
+  // Get marketplace cache TTL
+  ipcMain.handle(IPC_CHANNELS.MARKETPLACE_GET_CACHE_TTL, async () => {
+    const { getMarketplaceCacheTTL } = await import('@link-agents/shared/config/storage')
+    return getMarketplaceCacheTTL()
+  })
+
+  // Set marketplace cache TTL
+  ipcMain.handle(IPC_CHANNELS.MARKETPLACE_SET_CACHE_TTL, async (_event, ttl: number) => {
+    const { setMarketplaceCacheTTL } = await import('@link-agents/shared/config/storage')
+    setMarketplaceCacheTTL(ttl)
   })
 
   // Update app badge count

@@ -22,15 +22,15 @@ export default defineConfig({
       '@': resolve(__dirname, 'src/renderer'),
       '@config': resolve(__dirname, '../../packages/shared/src/config'),
       // Force all React imports to use the root node_modules React
-      // Bun hoists deps to root. This prevents "multiple React copies" error from @craft-agent/ui
+      // Bun hoists deps to root. This prevents "multiple React copies" error from @link-agents/ui
       'react': resolve(__dirname, '../../node_modules/react'),
       'react-dom': resolve(__dirname, '../../node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom']
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'jotai'],
-    exclude: ['@craft-agent/ui']
+    include: ['react', 'react-dom', 'jotai', 'shiki'],
+    exclude: ['@link-agents/ui']
   },
   server: {
     port: 5173,

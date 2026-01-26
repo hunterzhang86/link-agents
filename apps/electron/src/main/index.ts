@@ -1,8 +1,3 @@
-// Load user's shell environment first (before other imports that may use env)
-// This ensures tools like Homebrew, nvm, etc. are available to the agent
-import { loadShellEnv } from './shell-env'
-loadShellEnv()
-
 import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
@@ -11,28 +6,26 @@ import { registerIpcHandlers } from './ipc'
 import { createApplicationMenu } from './menu'
 import { WindowManager } from './window-manager'
 import { loadWindowState, saveWindowState } from './window-state'
-import { getWorkspaces } from '@craft-agent/shared/config'
-import { initializeDocs } from '@craft-agent/shared/docs'
-import { ensureDefaultPermissions } from '@craft-agent/shared/agent/permissions-config'
+import { getWorkspaces } from '@link-agents/shared/config'
+import { initializeDocs } from '@link-agents/shared/docs'
+import { ensureDefaultPermissions } from '@link-agents/shared/agent/permissions-config'
 import { handleDeepLink } from './deep-link'
-import log, { isDebugMode, mainLog, getLogFilePath } from './logger'
-import { setPerfEnabled, enableDebug } from '@craft-agent/shared/utils'
+import log, { isDebugMode, mainLog, getLogFilePath, initializeLogger } from './logger'
+import { setPerfEnabled, enableDebug } from '@link-agents/shared/utils'
 import { initNotificationService, clearBadgeCount, initBadgeIcon, initInstanceBadge } from './notifications'
 import { checkForUpdatesOnLaunch, checkPendingUpdateAndInstall, setWindowManager as setAutoUpdateWindowManager } from './auto-update'
+
+// Load user's shell environment after imports
+// This ensures tools like Homebrew, nvm, etc. are available to the agent
+import { loadShellEnv } from './shell-env'
+loadShellEnv()
 
 // Initialize electron-log for renderer process support
 log.initialize()
 
-// Enable debug/perf in dev mode (running from source)
-if (isDebugMode) {
-  process.env.CRAFT_DEBUG = '1'
-  enableDebug()
-  setPerfEnabled(true)
-}
-
-// Custom URL scheme for deeplinks (e.g., craftagents://auth-complete)
-// Supports multi-instance dev: CRAFT_DEEPLINK_SCHEME env var (craftagents1, craftagents2, etc.)
-const DEEPLINK_SCHEME = process.env.CRAFT_DEEPLINK_SCHEME || 'craftagents'
+// Custom URL scheme for deeplinks (e.g., linkagents://auth-complete)
+// Supports multi-instance dev: LINK_DEEPLINK_SCHEME env var (linkagents1, linkagents2, etc.)
+const DEEPLINK_SCHEME = process.env.LINK_DEEPLINK_SCHEME || 'linkagents'
 
 let windowManager: WindowManager | null = null
 let sessionManager: SessionManager | null = null
@@ -41,60 +34,68 @@ let sessionManager: SessionManager | null = null
 let pendingDeepLink: string | null = null
 
 // Set app name early (before app.whenReady) to ensure correct macOS menu bar title
-// Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "Craft Agents [1]")
-app.setName(process.env.CRAFT_APP_NAME || 'Craft Agents')
+// Supports multi-instance dev: LINK_APP_NAME env var (e.g., "Link Agents [1]")
+if (app && app.setName) {
+  app.setName(process.env.LINK_APP_NAME || 'Link Agents')
+}
 
-// Register as default protocol client for craftagents:// URLs
+// Register as default protocol client for linkagents:// URLs
 // This must be done before app.whenReady() on some platforms
-if (process.defaultApp) {
-  // Development mode: need to pass the app path
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(DEEPLINK_SCHEME, process.execPath, [process.argv[1]])
+if (app && app.setAsDefaultProtocolClient) {
+  if (process.defaultApp) {
+    // Development mode: need to pass the app path
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(DEEPLINK_SCHEME, process.execPath, [process.argv[1]])
+    }
+  } else {
+    // Production mode
+    app.setAsDefaultProtocolClient(DEEPLINK_SCHEME)
   }
-} else {
-  // Production mode
-  app.setAsDefaultProtocolClient(DEEPLINK_SCHEME)
 }
 
 // Handle deeplink on macOS (when app is already running)
-app.on('open-url', (event, url) => {
-  event.preventDefault()
-  mainLog.info('Received deeplink:', url)
+if (app && app.on) {
+  app.on('open-url', (event, url) => {
+    event.preventDefault()
+    mainLog.info('Received deeplink:', url)
 
-  if (windowManager) {
-    handleDeepLink(url, windowManager).catch(err => {
-      mainLog.error('Failed to handle deep link:', err)
-    })
-  } else {
-    // App not ready - store for later
-    pendingDeepLink = url
-  }
-})
-
-// Handle deeplink on Windows/Linux (single instance check)
-const gotTheLock = app.requestSingleInstanceLock()
-if (!gotTheLock) {
-  app.quit()
-} else {
-  app.on('second-instance', (_event, commandLine, _workingDirectory) => {
-    // Someone tried to run a second instance, we should focus our window.
-    // On Windows/Linux, the deeplink is in commandLine
-    const url = commandLine.find(arg => arg.startsWith(`${DEEPLINK_SCHEME}://`))
-    if (url && windowManager) {
-      mainLog.info('Received deeplink from second instance:', url)
+    if (windowManager) {
       handleDeepLink(url, windowManager).catch(err => {
         mainLog.error('Failed to handle deep link:', err)
       })
-    } else if (windowManager) {
-      // No deep link - just focus the first window
-      const windows = windowManager.getAllWindows()
-      if (windows.length > 0) {
-        const win = windows[0].window
-        if (win.isMinimized()) win.restore()
-        win.focus()
-      }
+    } else {
+      // App not ready - store for later
+      pendingDeepLink = url
     }
   })
+}
+
+// Handle deeplink on Windows/Linux (single instance check)
+if (app && app.requestSingleInstanceLock) {
+  const gotTheLock = app.requestSingleInstanceLock()
+  if (!gotTheLock) {
+    app.quit()
+  } else {
+    app.on('second-instance', (_event, commandLine, _workingDirectory) => {
+      // Someone tried to run a second instance, we should focus our window.
+      // On Windows/Linux, the deeplink is in commandLine
+      const url = commandLine.find(arg => arg.startsWith(`${DEEPLINK_SCHEME}://`))
+      if (url && windowManager) {
+        mainLog.info('Received deeplink from second instance:', url)
+        handleDeepLink(url, windowManager).catch(err => {
+          mainLog.error('Failed to handle deep link:', err)
+        })
+      } else if (windowManager) {
+        // No deep link - just focus the first window
+        const windows = windowManager.getAllWindows()
+        if (windows.length > 0) {
+          const win = windows[0].window
+          if (win.isMinimized()) win.restore()
+          win.focus()
+        }
+      }
+    })
+  }
 }
 
 // Helper to create initial windows on startup
@@ -144,6 +145,16 @@ async function createInitialWindows(): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  // Initialize logger configuration (must be after app is ready)
+  initializeLogger()
+
+  // Enable debug/perf in dev mode (running from source)
+  if (isDebugMode()) {
+    process.env.CRAFT_DEBUG = '1'
+    enableDebug()
+    setPerfEnabled(true)
+  }
+
   // Initialize bundled docs
   initializeDocs()
 
@@ -226,7 +237,7 @@ app.whenReady().then(async () => {
     }
 
     mainLog.info('App initialized successfully')
-    if (isDebugMode) {
+    if (isDebugMode()) {
       mainLog.info('Debug mode enabled - logs at:', getLogFilePath())
     }
   } catch (error) {

@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Loader2 } from 'lucide-react'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
-import { type PermissionsConfigFile } from '@craft-agent/shared/agent/modes'
+import { type PermissionsConfigFile } from '@link-agents/shared/agent/modes'
 import {
   PermissionsDataTable,
   type PermissionRow,

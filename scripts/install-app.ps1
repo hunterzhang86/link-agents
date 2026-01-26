@@ -1,4 +1,4 @@
-# Craft Agent Windows Installer
+# Link Agent Windows Installer
 # Usage: irm https://agents.craft.do/install-app.ps1 | iex
 
 $ErrorActionPreference = "Stop"
@@ -9,7 +9,7 @@ $GitHubApiBase = if ($env:CRAFT_GITHUB_API_BASE) { $env:CRAFT_GITHUB_API_BASE } 
 $ReleaseTagOverride = $env:CRAFT_RELEASE_TAG
 $RequireChecksum = $env:CRAFT_REQUIRE_CHECKSUM -eq "true"
 $DOWNLOAD_DIR = "$env:TEMP\craft-agent-install"
-$APP_NAME = "Craft Agent"
+$APP_NAME = "Link Agent"
 
 # Colors for output
 function Write-Info { Write-Host "> $args" -ForegroundColor Blue }
@@ -160,9 +160,9 @@ if ($checksum) {
 }
 
 # Close the app if it's running
-$process = Get-Process -Name "Craft Agent" -ErrorAction SilentlyContinue
+$process = Get-Process -Name "Link Agent" -ErrorAction SilentlyContinue
 if ($process) {
-    Write-Info "Closing Craft Agent..."
+    Write-Info "Closing Link Agent..."
     $process | Stop-Process -Force
     Start-Sleep -Seconds 2
 }
@@ -197,9 +197,9 @@ Remove-Item -Path $installerPath -Force -ErrorAction SilentlyContinue
 # Add command line shortcut
 Write-Info "Adding 'craft-agents' command to PATH..."
 
-$binDir = "$env:LOCALAPPDATA\Craft Agent\bin"
+$binDir = "$env:LOCALAPPDATA\Link Agent\bin"
 $cmdFile = "$binDir\craft-agents.cmd"
-$exePath = "$env:LOCALAPPDATA\Programs\Craft Agent\Craft Agent.exe"
+$exePath = "$env:LOCALAPPDATA\Programs\Link Agent\Link Agent.exe"
 
 # Create bin directory
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
@@ -223,7 +223,7 @@ Write-Host "--------------------------------------------------------------------
 Write-Host ""
 Write-Success "Installation complete!"
 Write-Host ""
-Write-Host "  Craft Agent has been installed."
+Write-Host "  Link Agent has been installed."
 Write-Host ""
 Write-Host "  Launch from:"
 Write-Host "    - Start Menu or desktop shortcut"

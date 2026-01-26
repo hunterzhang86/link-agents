@@ -89,7 +89,7 @@ import {
 import type { SettingsSubpage } from "../../../shared/types"
 import { isClaudeCodeNavigation } from "../../../shared/types"
 import { SourcesListPanel } from "./SourcesListPanel"
-import { SkillsListPanel } from "./SkillsListPanel"
+import { SkillMarketplacePanel } from "./SkillMarketplacePanel"
 import { ClaudeCodeListPanel } from "./ClaudeCodeListPanel"
 import { PanelHeader } from "./PanelHeader"
 import { EditPopover, getEditConfig } from "@/components/ui/EditPopover"
@@ -190,7 +190,7 @@ function AppShellContent({
   })
   // Session list width in pixels (min 240, max 480)
   const [sessionListWidth, setSessionListWidth] = React.useState(() => {
-    return storage.get(storage.KEYS.sessionListWidth, 300)
+    return storage.get(storage.KEYS.sessionListWidth, 260)
   })
 
   // Right sidebar state (min 280, max 480)
@@ -1409,7 +1409,7 @@ function AppShellContent({
             )}
             {isSkillsNavigation(navState) && activeWorkspaceId && (
               /* Skills List */
-              <SkillsListPanel
+              <SkillMarketplacePanel
                 skills={skills}
                 workspaceId={activeWorkspaceId}
                 workspaceRootPath={activeWorkspace?.rootPath}

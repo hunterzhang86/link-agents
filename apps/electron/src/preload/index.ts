@@ -60,7 +60,7 @@ const api: ElectronAPI = {
 
   // File operations
   readFile: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.READ_FILE, path),
-  openFileDialog: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_FILE_DIALOG),
+  openFileDialog: (options?: Electron.OpenDialogOptions) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_FILE_DIALOG, options),
   readFileAttachment: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.READ_FILE_ATTACHMENT, path),
   storeAttachment: (sessionId: string, attachment: FileAttachment) => ipcRenderer.invoke(IPC_CHANNELS.STORE_ATTACHMENT, sessionId, attachment),
   generateThumbnail: (base64: string, mimeType: string) => ipcRenderer.invoke(IPC_CHANNELS.GENERATE_THUMBNAIL, base64, mimeType),
@@ -212,7 +212,7 @@ const api: ElectronAPI = {
 
   // Sources
   getSources: (workspaceId: string) => ipcRenderer.invoke(IPC_CHANNELS.SOURCES_GET, workspaceId),
-  createSource: (workspaceId: string, config: Partial<import('@craft-agent/shared/sources').FolderSourceConfig>) =>
+  createSource: (workspaceId: string, config: Partial<import('@link-agents/shared/sources').FolderSourceConfig>) =>
     ipcRenderer.invoke(IPC_CHANNELS.SOURCES_CREATE, workspaceId, config),
   deleteSource: (workspaceId: string, sourceSlug: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SOURCES_DELETE, workspaceId, sourceSlug),
@@ -248,8 +248,8 @@ const api: ElectronAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_WRITE_IMAGE, workspaceId, relativePath, base64, mimeType),
 
   // Sources change listener (live updates when sources are added/removed)
-  onSourcesChanged: (callback: (sources: import('@craft-agent/shared/sources').LoadedSource[]) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, sources: import('@craft-agent/shared/sources').LoadedSource[]) => {
+  onSourcesChanged: (callback: (sources: import('@link-agents/shared/sources').LoadedSource[]) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, sources: import('@link-agents/shared/sources').LoadedSource[]) => {
       callback(sources)
     }
     ipcRenderer.on(IPC_CHANNELS.SOURCES_CHANGED, handler)
@@ -263,16 +263,42 @@ const api: ElectronAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.SKILLS_GET, workspaceId),
   getSkillFiles: (workspaceId: string, skillSlug: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILLS_GET_FILES, workspaceId, skillSlug),
+  readSkillFile: (workspaceId: string, skillSlug: string, relativePath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_READ_FILE, workspaceId, skillSlug, relativePath),
+  writeSkillFile: (workspaceId: string, skillSlug: string, relativePath: string, content: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_WRITE_FILE, workspaceId, skillSlug, relativePath, content),
+  deleteSkillFile: (workspaceId: string, skillSlug: string, relativePath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_DELETE_FILE, workspaceId, skillSlug, relativePath),
   deleteSkill: (workspaceId: string, skillSlug: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILLS_DELETE, workspaceId, skillSlug),
   openSkillInEditor: (workspaceId: string, skillSlug: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILLS_OPEN_EDITOR, workspaceId, skillSlug),
   openSkillInFinder: (workspaceId: string, skillSlug: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILLS_OPEN_FINDER, workspaceId, skillSlug),
+  updateSkillContent: (workspaceId: string, skillSlug: string, metadata: any, content: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_UPDATE_CONTENT, workspaceId, skillSlug, metadata, content),
+
+  // Skills Marketplace
+  importSkillFromZip: (workspaceId: string, zipPath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_IMPORT_ZIP, workspaceId, zipPath),
+  importSkillFromFolder: (workspaceId: string, folderPath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_IMPORT_FOLDER, workspaceId, folderPath),
+  importSkillFromGit: (workspaceId: string, gitUrl: string, branch?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_IMPORT_GIT, workspaceId, gitUrl, branch),
+  importSkillFromFile: (workspaceId: string, filePath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_IMPORT_FILE, workspaceId, filePath),
+  importSkillFromUrl: (workspaceId: string, url: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_IMPORT_URL, workspaceId, url),
+  getSkillsCatalog: (forceRefresh?: boolean) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_GET_CATALOG, forceRefresh),
+  checkSkillUpdates: (workspaceId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_CHECK_UPDATES, workspaceId),
+  updateSkill: (workspaceId: string, skillSlug: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILLS_UPDATE, workspaceId, skillSlug),
 
   // Skills change listener (live updates when skills are added/removed/modified)
-  onSkillsChanged: (callback: (skills: import('@craft-agent/shared/skills').LoadedSkill[]) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, skills: import('@craft-agent/shared/skills').LoadedSkill[]) => {
+  onSkillsChanged: (callback: (skills: import('@link-agents/shared/skills').LoadedSkill[]) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, skills: import('@link-agents/shared/skills').LoadedSkill[]) => {
       callback(skills)
     }
     ipcRenderer.on(IPC_CHANNELS.SKILLS_CHANGED, handler)
@@ -313,8 +339,8 @@ const api: ElectronAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.LOGO_GET_URL, serviceUrl, provider),
 
   // Theme change listeners (live updates when theme.json files change)
-  onAppThemeChange: (callback: (theme: import('@craft-agent/shared/config').ThemeOverrides | null) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, theme: import('@craft-agent/shared/config').ThemeOverrides | null) => {
+  onAppThemeChange: (callback: (theme: import('@link-agents/shared/config').ThemeOverrides | null) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, theme: import('@link-agents/shared/config').ThemeOverrides | null) => {
       callback(theme)
     }
     ipcRenderer.on(IPC_CHANNELS.THEME_APP_CHANGED, handler)
@@ -342,6 +368,17 @@ const api: ElectronAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.NOTIFICATION_GET_ENABLED) as Promise<boolean>,
   setNotificationsEnabled: (enabled: boolean) =>
     ipcRenderer.invoke(IPC_CHANNELS.NOTIFICATION_SET_ENABLED, enabled),
+
+  // Marketplace
+  getMarketplaceUrl: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE_GET_URL) as Promise<string>,
+  setMarketplaceUrl: (url: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE_SET_URL, url),
+  getMarketplaceCacheTTL: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE_GET_CACHE_TTL) as Promise<number>,
+  setMarketplaceCacheTTL: (ttl: number) =>
+    ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE_SET_CACHE_TTL, ttl),
+
   updateBadgeCount: (count: number) =>
     ipcRenderer.invoke(IPC_CHANNELS.BADGE_UPDATE, count),
   clearBadgeCount: () =>

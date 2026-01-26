@@ -30,7 +30,7 @@ import {
   ExternalLink,
   CheckCircle2,
 } from 'lucide-react'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@link-agents/ui'
 import type { AuthType } from '../../../shared/types'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 
@@ -42,6 +42,7 @@ import {
   SettingsSegmentedControl,
   SettingsMenuSelectRow,
   SettingsMenuSelect,
+  SettingsInput,
 } from '@/components/settings'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -374,6 +375,11 @@ export default function AppSettingsPage() {
   // Notifications state
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
+  // Marketplace state
+  const [marketplaceUrl, setMarketplaceUrl] = useState('https://github.com/anthropics/skills')
+  const [marketplaceCacheTTL, setMarketplaceCacheTTL] = useState('24')
+  const [isSavingMarketplace, setIsSavingMarketplace] = useState(false)
+
   // Auto-update state
   const updateChecker = useUpdateChecker()
   const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false)
@@ -387,18 +393,24 @@ export default function AppSettingsPage() {
     }
   }, [updateChecker])
 
-  // Load current billing method, notifications setting, and preset themes on mount
+  // Load current billing method, notifications setting, and marketplace settings on mount
   useEffect(() => {
     const loadSettings = async () => {
       if (!window.electronAPI) return
       try {
-        const [billing, notificationsOn] = await Promise.all([
+        const [billing, notificationsOn, marketplaceUrlValue, marketplaceTTLValue] = await Promise.all([
           window.electronAPI.getBillingMethod(),
           window.electronAPI.getNotificationsEnabled(),
+          window.electronAPI.getMarketplaceUrl(),
+          window.electronAPI.getMarketplaceCacheTTL(),
         ])
         setAuthType(billing.authType)
         setHasCredential(billing.hasCredential)
         setNotificationsEnabled(notificationsOn)
+
+        // Load marketplace settings
+        setMarketplaceUrl(marketplaceUrlValue)
+        setMarketplaceCacheTTL(String(marketplaceTTLValue / (1000 * 60 * 60)))
       } catch (error) {
         console.error('Failed to load settings:', error)
       } finally {
@@ -581,6 +593,31 @@ export default function AppSettingsPage() {
     await window.electronAPI.setNotificationsEnabled(enabled)
   }, [])
 
+  const handleMarketplaceUrlChange = useCallback((url: string) => {
+    setMarketplaceUrl(url)
+  }, [])
+
+  const handleMarketplaceCacheTTLChange = useCallback((hours: string) => {
+    setMarketplaceCacheTTL(hours)
+  }, [])
+
+  const handleSaveMarketplaceSettings = useCallback(async () => {
+    if (!window.electronAPI) return
+
+    setIsSavingMarketplace(true)
+    try {
+      const ttlMs = parseInt(marketplaceCacheTTL, 10) * 1000 * 60 * 60
+      await Promise.all([
+        window.electronAPI.setMarketplaceUrl(marketplaceUrl.trim() || 'https://github.com/anthropics/skills'),
+        window.electronAPI.setMarketplaceCacheTTL(ttlMs),
+      ])
+    } catch (error) {
+      console.error('Failed to save marketplace settings:', error)
+    } finally {
+      setIsSavingMarketplace(false)
+    }
+  }, [marketplaceUrl, marketplaceCacheTTL])
+
   return (
     <div className="h-full flex flex-col">
       <PanelHeader title="App Settings" actions={<HeaderMenu route={routes.view.settings('app')} />} />
@@ -638,6 +675,35 @@ export default function AppSettingsPage() {
                   description="Get notified when AI finishes working in a chat."
                   checked={notificationsEnabled}
                   onCheckedChange={handleNotificationsEnabledChange}
+                />
+              </SettingsCard>
+            </SettingsSection>
+
+            {/* Marketplace */}
+            <SettingsSection
+              title="Skills Marketplace"
+              description="Configure where to fetch skills from"
+            >
+              <SettingsCard divided>
+                <SettingsInput
+                  label="Marketplace URL"
+                  description="GitHub repository URL for skills catalog (e.g., https://github.com/anthropics/skills)"
+                  value={marketplaceUrl}
+                  onChange={handleMarketplaceUrlChange}
+                  placeholder="https://github.com/anthropics/skills"
+                  type="url"
+                  inCard
+                  onBlur={handleSaveMarketplaceSettings}
+                />
+                <SettingsInput
+                  label="Cache Duration (hours)"
+                  description="How long to cache the skills catalog before refreshing"
+                  value={marketplaceCacheTTL}
+                  onChange={handleMarketplaceCacheTTLChange}
+                  placeholder="24"
+                  type="text"
+                  inCard
+                  onBlur={handleSaveMarketplaceSettings}
                 />
               </SettingsCard>
             </SettingsSection>
