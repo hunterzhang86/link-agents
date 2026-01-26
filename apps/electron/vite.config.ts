@@ -14,7 +14,19 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),
         playground: resolve(__dirname, 'src/renderer/playground.html'),
-      }
+      },
+      external: [
+        // Node.js built-in modules should not be bundled for renderer process
+        'fs',
+        'path',
+        'os',
+        'crypto',
+        'util',
+        'stream',
+        'events',
+        'buffer',
+        'process',
+      ]
     }
   },
   resolve: {

@@ -15,7 +15,9 @@ import { useSession as useSessionData, useAppShellContext } from '@/context/AppS
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { HorizontalResizeHandle } from '../ui/horizontal-resize-handle'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { SessionFilesSection } from './SessionFilesSection'
+import { WorkspaceFilesSection } from './WorkspaceFilesSection'
 import * as storage from '@/lib/local-storage'
 
 export interface SessionMetadataPanelProps {
@@ -70,13 +72,18 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(
  * Panel displaying session metadata with minimal styling
  */
 export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadataPanelProps) {
-  const { onRenameSession } = useAppShellContext()
+  const { onRenameSession, activeWorkspaceId } = useAppShellContext()
   const containerRef = useRef<HTMLDivElement>(null)
 
   // State for editable fields
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
   const [notesLoaded, setNotesLoaded] = useState(false)
+
+  // State for file view tab (session files or workspace files)
+  const [fileViewTab, setFileViewTab] = useState<'session' | 'workspace'>(() => {
+    return storage.get<'session' | 'workspace'>('sessionInfoFileViewTab', 'session')
+  })
 
   // State for resizable panel split - height of metadata section
   const [metadataHeight, setMetadataHeight] = useState(() => {
@@ -157,6 +164,11 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
     storage.set(storage.KEYS.sessionInfoMetadataHeight, metadataHeight)
   }, [metadataHeight])
 
+  // Save file view tab preference when it changes
+  useEffect(() => {
+    storage.set('sessionInfoFileViewTab', fileViewTab)
+  }, [fileViewTab])
+
   // Early return if no sessionId
   if (!sessionId) {
     return (
@@ -229,8 +241,21 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
       />
 
       {/* Files section - takes remaining space */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <SessionFilesSection sessionId={sessionId} />
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <Tabs value={fileViewTab} onValueChange={(value) => setFileViewTab(value as 'session' | 'workspace')} className="flex-1 flex flex-col min-h-0">
+          <div className="px-4 pt-2 pb-1 shrink-0">
+            <TabsList className="w-full">
+              <TabsTrigger value="session" className="flex-1">Session Files</TabsTrigger>
+              <TabsTrigger value="workspace" className="flex-1" disabled={!activeWorkspaceId}>Workspace Files</TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="session" className="flex-1 min-h-0 mt-0">
+            <SessionFilesSection sessionId={sessionId} />
+          </TabsContent>
+          <TabsContent value="workspace" className="flex-1 min-h-0 mt-0">
+            <WorkspaceFilesSection workspaceId={activeWorkspaceId} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

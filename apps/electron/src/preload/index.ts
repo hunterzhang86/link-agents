@@ -153,6 +153,7 @@ const api: ElectronAPI = {
     workspace?: { name: string; iconUrl?: string; mcpUrl?: string }
     credential?: string
     baseUrl?: string
+    model?: string
     mcpCredentials?: { accessToken: string; clientId?: string }
   }) => ipcRenderer.invoke(IPC_CHANNELS.ONBOARDING_SAVE_CONFIG, config),
   // Claude OAuth
@@ -167,8 +168,8 @@ const api: ElectronAPI = {
 
   // Settings - Billing
   getBillingMethod: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_BILLING_METHOD),
-  updateBillingMethod: (authType: AuthType, credential?: string, baseUrl?: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, authType, credential, baseUrl),
+  updateBillingMethod: (authType: AuthType, credential?: string, baseUrl?: string, model?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, authType, credential, baseUrl, model),
 
   // Settings - Model (global default)
   getModel: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_MODEL),
@@ -209,6 +210,8 @@ const api: ElectronAPI = {
     ipcRenderer.on(IPC_CHANNELS.SESSION_FILES_CHANGED, handler)
     return () => ipcRenderer.removeListener(IPC_CHANNELS.SESSION_FILES_CHANGED, handler)
   },
+  // Workspace files
+  getWorkspaceFiles: (workspaceId: string) => ipcRenderer.invoke(IPC_CHANNELS.GET_WORKSPACE_FILES, workspaceId),
 
   // Sources
   getSources: (workspaceId: string) => ipcRenderer.invoke(IPC_CHANNELS.SOURCES_GET, workspaceId),

@@ -10,6 +10,7 @@ import type { AuthType } from '../config/storage.ts';
 export interface ApiKeyCredentials {
   apiKey: string;
   baseUrl?: string;
+  model?: string;
 }
 
 export interface ClaudeMaxCredentials {
@@ -32,6 +33,7 @@ export function setAuthEnvironment(auth: AuthCredentials): void {
   // Clear all auth-related env vars first
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.ANTHROPIC_BASE_URL;
+  delete process.env.ANTHROPIC_MODEL;
   delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
 
   switch (auth.type) {
@@ -39,6 +41,9 @@ export function setAuthEnvironment(auth: AuthCredentials): void {
       process.env.ANTHROPIC_API_KEY = auth.credentials.apiKey;
       if (auth.credentials.baseUrl) {
         process.env.ANTHROPIC_BASE_URL = auth.credentials.baseUrl;
+      }
+      if (auth.credentials.model) {
+        process.env.ANTHROPIC_MODEL = auth.credentials.model;
       }
       break;
 
@@ -54,5 +59,6 @@ export function setAuthEnvironment(auth: AuthCredentials): void {
 export function clearAuthEnvironment(): void {
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.ANTHROPIC_BASE_URL;
+  delete process.env.ANTHROPIC_MODEL;
   delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
 }

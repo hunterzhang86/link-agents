@@ -83,6 +83,7 @@ export function registerOnboardingHandlers(sessionManager: SessionManager): void
     workspace?: { name: string; iconUrl?: string; mcpUrl?: string }  // Optional - if not provided, only updates billing
     credential?: string
     baseUrl?: string
+    model?: string
     mcpCredentials?: { accessToken: string; clientId?: string }
   }): Promise<OnboardingSaveResult> => {
     mainLog.info('[Onboarding:Main] ONBOARDING_SAVE_CONFIG received', {
@@ -115,6 +116,15 @@ export function registerOnboardingHandlers(sessionManager: SessionManager): void
           } else {
             mainLog.info('[Onboarding:Main] Deleting base URL (not provided or empty)')
             await manager.deleteBaseUrl()
+          }
+          // Save model if provided, otherwise delete it
+          if (config.model && config.model.trim()) {
+            mainLog.info('[Onboarding:Main] Saving model:', config.model)
+            await manager.setModel(config.model.trim())
+            mainLog.info('[Onboarding:Main] Model saved successfully')
+          } else {
+            mainLog.info('[Onboarding:Main] Deleting model (not provided or empty)')
+            await manager.deleteModel()
           }
         } else if (config.authType === 'oauth_token') {
           mainLog.info('[Onboarding:Main] Importing full Claude OAuth credentials...')

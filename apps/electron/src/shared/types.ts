@@ -480,6 +480,8 @@ export const IPC_CHANNELS = {
   WATCH_SESSION_FILES: 'sessions:watchFiles',      // Start watching session directory
   UNWATCH_SESSION_FILES: 'sessions:unwatchFiles',  // Stop watching
   SESSION_FILES_CHANGED: 'sessions:filesChanged',  // Event: main → renderer
+  // Workspace files
+  GET_WORKSPACE_FILES: 'workspaces:getFiles',
 
   // Theme
   GET_SYSTEM_THEME: 'theme:getSystemPreference',
@@ -744,6 +746,7 @@ export interface ElectronAPI {
     workspace?: { name: string; iconUrl?: string; mcpUrl?: string }  // Optional - if not provided, only updates billing
     credential?: string  // API key or OAuth token based on authType
     baseUrl?: string  // Optional - Anthropic API base URL (for API key auth)
+    model?: string  // Optional - Anthropic model (for API key auth)
     mcpCredentials?: { accessToken: string; clientId?: string }  // MCP OAuth credentials
   }): Promise<OnboardingSaveResult>
   // Claude OAuth
@@ -758,7 +761,7 @@ export interface ElectronAPI {
 
   // Settings - Billing
   getBillingMethod(): Promise<BillingMethodInfo>
-  updateBillingMethod(authType: AuthType, credential?: string, baseUrl?: string): Promise<void>
+  updateBillingMethod(authType: AuthType, credential?: string, baseUrl?: string, model?: string): Promise<void>
 
   // Settings - Model (global default)
   getModel(): Promise<string | null>
@@ -791,6 +794,8 @@ export interface ElectronAPI {
   watchSessionFiles(sessionId: string): Promise<void>
   unwatchSessionFiles(): Promise<void>
   onSessionFilesChanged(callback: (sessionId: string) => void): () => void
+  // Workspace files
+  getWorkspaceFiles(workspaceId: string): Promise<SessionFile[]>
 
   // Sources
   getSources(workspaceId: string): Promise<LoadedSource[]>

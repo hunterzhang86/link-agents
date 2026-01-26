@@ -11,12 +11,11 @@
  * - Read-only mode support
  */
 
-import * as React from 'react'
-import { useState, useEffect, useCallback, useRef } from 'react'
-import Editor from 'react-simple-code-editor'
-import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
-import { cn } from '@/lib/utils'
 import { useTheme } from '@/hooks/useTheme'
+import { cn } from '@/lib/utils'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Editor from 'react-simple-code-editor'
+import { bundledLanguages, codeToHtml, type BundledLanguage } from 'shiki'
 
 export interface ShikiCodeEditorProps {
   /** The code/markdown content */
@@ -193,6 +192,10 @@ export function ShikiCodeEditor({
         className="min-h-full"
       />
       <style>{`
+        .npm__react-simple-code-editor__textarea {
+          color: ${textColor} !important;
+          background: transparent !important;
+        }
         .npm__react-simple-code-editor__textarea::placeholder {
           color: ${placeholderColor};
         }

@@ -67,8 +67,10 @@ export const meta: DetailsPageMeta = {
 interface ApiKeyDialogProps {
   value: string
   baseUrl: string
+  model: string
   onChange: (value: string) => void
   onBaseUrlChange: (value: string) => void
+  onModelChange: (value: string) => void
   onSave: () => void
   onCancel: () => void
   isSaving: boolean
@@ -76,7 +78,7 @@ interface ApiKeyDialogProps {
   error?: string
 }
 
-function ApiKeyDialogContent({ value, baseUrl, onChange, onBaseUrlChange, onSave, onCancel, isSaving, hasExistingKey, error }: ApiKeyDialogProps) {
+function ApiKeyDialogContent({ value, baseUrl, model, onChange, onBaseUrlChange, onModelChange, onSave, onCancel, isSaving, hasExistingKey, error }: ApiKeyDialogProps) {
   const [showValue, setShowValue] = useState(false)
 
   return (
@@ -136,6 +138,22 @@ function ApiKeyDialogContent({ value, baseUrl, onChange, onBaseUrlChange, onSave
         />
         <p className="text-xs text-muted-foreground">
           Leave empty to use the default Anthropic API endpoint
+        </p>
+      </div>
+
+      {/* Model Input */}
+      <div className="space-y-2">
+        <Label htmlFor="model">Model (optional)</Label>
+        <Input
+          id="model"
+          type="text"
+          value={model}
+          onChange={(e) => onModelChange(e.target.value)}
+          placeholder="claude-sonnet-4-5-20250929"
+          disabled={isSaving}
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave empty to use the default model
         </p>
       </div>
 
@@ -362,6 +380,7 @@ export default function AppSettingsPage() {
   // API Key state
   const [apiKeyValue, setApiKeyValue] = useState('')
   const [baseUrlValue, setBaseUrlValue] = useState('')
+  const [modelValue, setModelValue] = useState('')
   const [isSavingApiKey, setIsSavingApiKey] = useState(false)
   const [apiKeyError, setApiKeyError] = useState<string | undefined>()
 
@@ -462,6 +481,20 @@ export default function AppSettingsPage() {
     setApiKeyError(undefined)
     setClaudeOAuthStatus('idle')
     setClaudeOAuthError(undefined)
+    
+    // Load existing baseUrl and model when opening API key dialog
+    if (method === 'api_key' && window.electronAPI) {
+      try {
+        const manager = await import('@link-agents/shared/credentials')
+        const credentialManager = manager.getCredentialManager()
+        const baseUrl = await credentialManager.getBaseUrl()
+        const model = await credentialManager.getModel()
+        setBaseUrlValue(baseUrl || '')
+        setModelValue(model || '')
+      } catch (error) {
+        console.error('Failed to load baseUrl/model:', error)
+      }
+    }
   }, [])
 
   // Cancel billing method expansion
@@ -469,6 +502,7 @@ export default function AppSettingsPage() {
     setExpandedMethod(null)
     setApiKeyValue('')
     setBaseUrlValue('')
+    setModelValue('')
     setApiKeyError(undefined)
     setClaudeOAuthStatus('idle')
     setClaudeOAuthError(undefined)
@@ -481,11 +515,12 @@ export default function AppSettingsPage() {
     setIsSavingApiKey(true)
     setApiKeyError(undefined)
     try {
-      await window.electronAPI.updateBillingMethod('api_key', apiKeyValue.trim(), baseUrlValue.trim() || undefined)
+      await window.electronAPI.updateBillingMethod('api_key', apiKeyValue.trim(), baseUrlValue.trim() || undefined, modelValue.trim() || undefined)
       setAuthType('api_key')
       setHasCredential(true)
       setApiKeyValue('')
       setBaseUrlValue('')
+      setModelValue('')
       setExpandedMethod(null)
     } catch (error) {
       console.error('Failed to save API key:', error)
@@ -493,7 +528,7 @@ export default function AppSettingsPage() {
     } finally {
       setIsSavingApiKey(false)
     }
-  }, [apiKeyValue, baseUrlValue])
+  }, [apiKeyValue, baseUrlValue, modelValue])
 
   // Use existing Claude token
   const handleUseExistingClaudeToken = useCallback(async () => {
@@ -741,8 +776,10 @@ export default function AppSettingsPage() {
                   <ApiKeyDialogContent
                     value={apiKeyValue}
                     baseUrl={baseUrlValue}
+                    model={modelValue}
                     onChange={setApiKeyValue}
                     onBaseUrlChange={setBaseUrlValue}
+                    onModelChange={setModelValue}
                     onSave={handleSaveApiKey}
                     onCancel={handleCancel}
                     isSaving={isSavingApiKey}

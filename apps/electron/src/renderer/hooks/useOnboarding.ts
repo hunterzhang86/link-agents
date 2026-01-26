@@ -80,7 +80,7 @@ export function useOnboarding({
   })
 
   // Save configuration
-  const handleSaveConfig = useCallback(async (credential?: string, baseUrl?: string) => {
+  const handleSaveConfig = useCallback(async (credential?: string, baseUrl?: string, model?: string) => {
     if (!state.billingMethod) {
       console.log('[Onboarding] No billing method, returning early')
       return
@@ -96,6 +96,7 @@ export function useOnboarding({
         authType,
         credential,
         baseUrl,
+        model,
       })
 
       if (result.success) {

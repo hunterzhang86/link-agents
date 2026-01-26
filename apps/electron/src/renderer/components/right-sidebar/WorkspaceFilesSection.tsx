@@ -1,11 +1,11 @@
 /**
- * SessionFilesSection - Displays files in the session directory as a tree view
+ * WorkspaceFilesSection - Displays files in the workspace directory as a tree view
  *
+ * Similar to SessionFilesSection but for workspace root directory.
  * Features:
  * - Recursive tree view with expandable folders (matches sidebar styling)
- * - File watcher for auto-refresh when files change
  * - Click to reveal in Finder, double-click to open
- * - Persisted expanded folder state per session
+ * - Persisted expanded folder state per workspace
  *
  * Styling matches LeftSidebar patterns:
  * - Chevron hidden by default, shown on hover
@@ -20,6 +20,7 @@ import { File, Folder, FolderOpen, FileText, Image, FileCode, ChevronRight } fro
 import type { SessionFile } from '../../../shared/types'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
+import { useAppShellContext } from '@/context/AppShellContext'
 
 /**
  * Stagger animation variants for child items - matches LeftSidebar pattern
@@ -57,8 +58,8 @@ const itemVariants: Variants = {
   },
 }
 
-export interface SessionFilesSectionProps {
-  sessionId?: string
+export interface WorkspaceFilesSectionProps {
+  workspaceId?: string
   className?: string
 }
 
@@ -256,46 +257,50 @@ function FileTreeItem({
 }
 
 /**
- * Section displaying session files as a tree
+ * Section displaying workspace files as a tree
  */
-export function SessionFilesSection({ sessionId, className }: SessionFilesSectionProps) {
+export function WorkspaceFilesSection({ workspaceId, className }: WorkspaceFilesSectionProps) {
+  const { activeWorkspaceId } = useAppShellContext()
+  const effectiveWorkspaceId = workspaceId || activeWorkspaceId
   const [files, setFiles] = useState<SessionFile[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const mountedRef = useRef(true)
 
-  // Load expanded paths from storage when session changes
+  // Load expanded paths from storage when workspace changes
   useEffect(() => {
-    if (sessionId) {
-      const saved = storage.get<string[]>(storage.KEYS.sessionFilesExpandedFolders, [], sessionId)
+    if (effectiveWorkspaceId) {
+      const storageKey = `workspace-files-expanded-${effectiveWorkspaceId}`
+      const saved = storage.get<string[]>(storageKey, [])
       setExpandedPaths(new Set(saved))
     } else {
       setExpandedPaths(new Set())
     }
-  }, [sessionId])
+  }, [effectiveWorkspaceId])
 
   // Save expanded paths to storage when they change
   const saveExpandedPaths = useCallback((paths: Set<string>) => {
-    if (sessionId) {
-      storage.set(storage.KEYS.sessionFilesExpandedFolders, Array.from(paths), sessionId)
+    if (effectiveWorkspaceId) {
+      const storageKey = `workspace-files-expanded-${effectiveWorkspaceId}`
+      storage.set(storageKey, Array.from(paths))
     }
-  }, [sessionId])
+  }, [effectiveWorkspaceId])
 
   // Load files
   const loadFiles = useCallback(async () => {
-    if (!sessionId) {
+    if (!effectiveWorkspaceId) {
       setFiles([])
       return
     }
 
     setIsLoading(true)
     try {
-      const sessionFiles = await window.electronAPI.getSessionFiles(sessionId)
+      const workspaceFiles = await window.electronAPI.getWorkspaceFiles(effectiveWorkspaceId)
       if (mountedRef.current) {
-        setFiles(sessionFiles)
+        setFiles(workspaceFiles)
       }
     } catch (error) {
-      console.error('Failed to load session files:', error)
+      console.error('Failed to load workspace files:', error)
       if (mountedRef.current) {
         setFiles([])
       }
@@ -304,35 +309,17 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
         setIsLoading(false)
       }
     }
-  }, [sessionId])
+  }, [effectiveWorkspaceId])
 
-  // Initial load and file watcher setup
+  // Initial load
   useEffect(() => {
     mountedRef.current = true
     loadFiles()
 
-    if (sessionId) {
-      // Start watching for file changes
-      window.electronAPI.watchSessionFiles(sessionId)
-
-      // Listen for file change events
-      const unsubscribe = window.electronAPI.onSessionFilesChanged((changedSessionId) => {
-        if (changedSessionId === sessionId && mountedRef.current) {
-          loadFiles()
-        }
-      })
-
-      return () => {
-        mountedRef.current = false
-        unsubscribe()
-        window.electronAPI.unwatchSessionFiles()
-      }
-    }
-
     return () => {
       mountedRef.current = false
     }
-  }, [sessionId, loadFiles])
+  }, [loadFiles])
 
   // Handle file click - reveal in Finder
   const handleFileClick = useCallback((file: SessionFile) => {
@@ -362,7 +349,7 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
     })
   }, [saveExpandedPaths])
 
-  if (!sessionId) {
+  if (!effectiveWorkspaceId) {
     return null
   }
 
@@ -374,7 +361,7 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
         {files.length === 0 ? (
           <div className="px-4 text-muted-foreground select-none">
             <p className="text-xs">
-              {isLoading ? 'Loading...' : 'Files attached or created by this chat will appear here.'}
+              {isLoading ? 'Loading...' : 'No files found in workspace.'}
             </p>
           </div>
         ) : (

@@ -11,9 +11,12 @@
 
 import type { CredentialBackend } from './backends/types.ts';
 import type { CredentialId, CredentialType, StoredCredential } from './types.ts';
-import { SecureStorageBackend } from './backends/secure-storage.ts';
 import { EnvironmentBackend } from './backends/env.ts';
 import { debug } from '../utils/debug.ts';
+
+// Conditionally import SecureStorageBackend only in Node.js environment
+// This prevents build errors in browser/renderer processes
+const isNodeEnvironment = typeof process !== 'undefined' && process.versions?.node;
 
 export class CredentialManager {
   private backends: CredentialBackend[] = [];
@@ -53,10 +56,15 @@ export class CredentialManager {
 
   private async _doInitialize(): Promise<void> {
     // Register backends in priority order (secure storage + environment)
-    const potentialBackends: CredentialBackend[] = [
-      new SecureStorageBackend(),
-      new EnvironmentBackend(),
-    ];
+    // Only include SecureStorageBackend in Node.js environment
+    const potentialBackends: CredentialBackend[] = [];
+    
+    if (isNodeEnvironment) {
+      const secureStorageBackend = await this.createSecureStorageBackend();
+      potentialBackends.push(secureStorageBackend);
+    }
+    
+    potentialBackends.push(new EnvironmentBackend());
 
     // Check which backends are available
     for (const backend of potentialBackends) {
@@ -206,6 +214,22 @@ export class CredentialManager {
     return await this.delete({ type: 'anthropic_base_url' });
   }
 
+  /** Get Anthropic Model */
+  async getModel(): Promise<string | null> {
+    const cred = await this.get({ type: 'anthropic_model' });
+    return cred?.value || null;
+  }
+
+  /** Set Anthropic Model */
+  async setModel(model: string): Promise<void> {
+    await this.set({ type: 'anthropic_model' }, { value: model });
+  }
+
+  /** Delete Anthropic Model */
+  async deleteModel(): Promise<boolean> {
+    return await this.delete({ type: 'anthropic_model' });
+  }
+
   /** Get Claude OAuth token */
   async getClaudeOAuth(): Promise<string | null> {
     const cred = await this.get({ type: 'claude_oauth' });
@@ -331,6 +355,18 @@ export class CredentialManager {
     if (!credential.expiresAt) return false;
     // Consider expired if within 5 minutes of expiry
     return Date.now() > credential.expiresAt - 5 * 60 * 1000;
+  }
+
+  /**
+   * Create SecureStorageBackend instance using dynamic import.
+   * This prevents the module from being bundled in browser/renderer builds.
+   */
+  private async createSecureStorageBackend(): Promise<CredentialBackend> {
+    if (!isNodeEnvironment) {
+      throw new Error('SecureStorageBackend is only available in Node.js environment');
+    }
+    const { SecureStorageBackend } = await import('./backends/secure-storage.ts');
+    return new SecureStorageBackend();
   }
 }
 

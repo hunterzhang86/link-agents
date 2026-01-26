@@ -14,6 +14,11 @@ const linkify = new LinkifyIt()
 // Matches paths that start with /, ~/, or ./ followed by path chars and a file extension
 const FILE_PATH_REGEX = /(?:^|[\s([\{<])((\/|~\/|\.\/)[\w\-./@]+\.(?:ts|tsx|js|jsx|mjs|cjs|md|json|yaml|yml|py|go|rs|css|scss|less|html|htm|txt|log|sh|bash|zsh|swift|kt|java|c|cpp|h|hpp|rb|php|xml|toml|ini|cfg|conf|env|sql|graphql|vue|svelte|astro|prisma|dockerfile|makefile|gitignore))(?=[\s)\]}\.,;:!?>]|$)/gi
 
+// Folder path regex - detects folder paths ending with /
+// Matches paths like /path/to/folder/, ~/folder/, ./folder/
+// Requires at least one / in the path (to distinguish from single words)
+const FOLDER_PATH_REGEX = /(?:^|[\s([\{<])((\/|~\/|\.\/)[\w\-./@]+\/)(?=[\s)\]}\.,;:!?>]|$)/gi
+
 interface DetectedLink {
   type: 'url' | 'email' | 'file'
   text: string
@@ -110,7 +115,7 @@ export function detectLinks(text: string): DetectedLink[] {
     })
   }
 
-  // 2. Detect file paths with custom regex
+  // 2. Detect file paths with custom regex (files with extensions)
   // Reset regex state
   FILE_PATH_REGEX.lastIndex = 0
   let fileMatch
@@ -132,6 +137,36 @@ export function detectLinks(text: string): DetectedLink[] {
       type: 'file',
       text: path,
       url: path, // File paths are passed as-is to onFileClick handler
+      start,
+      end: start + path.length
+    })
+  }
+
+  // 3. Detect folder paths (paths ending with /)
+  // Reset regex state
+  FOLDER_PATH_REGEX.lastIndex = 0
+  let folderMatch
+  while ((folderMatch = FOLDER_PATH_REGEX.exec(text)) !== null) {
+    const path = folderMatch[1]
+    if (!path) continue // Skip if no capture group
+
+    // Skip root paths like /, ~/, ./
+    if (path === '/' || path === '~/' || path === './') continue
+
+    // Calculate actual start position (after any leading whitespace/punctuation)
+    const fullMatch = folderMatch[0]
+    const pathOffset = fullMatch.indexOf(path)
+    const start = folderMatch.index + pathOffset
+
+    // Check for overlaps with URL matches or file matches (URLs and files take precedence)
+    const pathRange = { start, end: start + path.length }
+    const overlapsOther = links.some(link => rangesOverlap(pathRange, link))
+    if (overlapsOther) continue
+
+    links.push({
+      type: 'file', // Use 'file' type so it gets handled by onFileClick
+      text: path,
+      url: path, // Folder paths are passed as-is to onFileClick handler (shell.openPath can open folders)
       start,
       end: start + path.length
     })

@@ -14,7 +14,7 @@ interface CredentialsStepProps {
   billingMethod: BillingMethod
   status: CredentialStatus
   errorMessage?: string
-  onSubmit: (credential: string, baseUrl?: string) => void
+  onSubmit: (credential: string, baseUrl?: string, model?: string) => void
   onStartOAuth?: () => void
   onBack: () => void
   // Claude OAuth specific
@@ -87,6 +87,7 @@ export function CredentialsStep({
 }: CredentialsStepProps) {
   const [value, setValue] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
+  const [model, setModel] = useState('')
   const [showValue, setShowValue] = useState(false)
   const [authCode, setAuthCode] = useState('')
 
@@ -96,7 +97,7 @@ export function CredentialsStep({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (value.trim()) {
-      onSubmit(value.trim(), baseUrl.trim() || undefined)
+      onSubmit(value.trim(), baseUrl.trim() || undefined, model.trim() || undefined)
     }
   }
 
@@ -319,6 +320,27 @@ export function CredentialsStep({
             </div>
             <p className="text-xs text-muted-foreground">
               Leave empty to use the default Anthropic API endpoint
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="model">Model (optional)</Label>
+            <div className={cn(
+              "relative rounded-md shadow-minimal transition-colors",
+              "bg-foreground-2 focus-within:bg-background"
+            )}>
+              <Input
+                id="model"
+                type="text"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="claude-sonnet-4-5-20250929"
+                className="border-0 bg-transparent shadow-none"
+                disabled={status === 'validating'}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Leave empty to use the default model
             </p>
           </div>
 

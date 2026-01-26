@@ -98,8 +98,8 @@ win:
   # executables because it scans/locks files while simultaneously trying to copy them.
   # Moving them to extraResources avoids this by copying them before the collector runs.
   # See: https://github.com/electron-userland/electron-builder/issues/8250
-  - "!vendor/bun/**/*"
-  - "!vendor/git/**/*"
+    - "!vendor/bun/**/*"
+    - "!vendor/git/**/*"
   # Copy bun.exe and git.exe as extraResources to avoid EBUSY file locking (see comment above)
   extraResources:
     - from: vendor/bun/bun.exe

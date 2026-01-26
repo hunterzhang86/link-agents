@@ -847,7 +847,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   })
 
   // Update billing method and credential
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, async (_event, authType: AuthType, credential?: string, baseUrl?: string) => {
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE_BILLING_METHOD, async (_event, authType: AuthType, credential?: string, baseUrl?: string, model?: string) => {
     const manager = getCredentialManager()
 
     // Clear old credentials when switching auth types
@@ -856,6 +856,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       if (oldAuthType === 'api_key') {
         await manager.delete({ type: 'anthropic_api_key' })
         await manager.deleteBaseUrl()
+        await manager.deleteModel()
       } else if (oldAuthType === 'oauth_token') {
         await manager.delete({ type: 'claude_oauth' })
       }
@@ -873,6 +874,12 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
           await manager.setBaseUrl(baseUrl.trim())
         } else {
           await manager.deleteBaseUrl()
+        }
+        // Store model if provided, otherwise delete it
+        if (model && model.trim()) {
+          await manager.setModel(model.trim())
+        } else {
+          await manager.deleteModel()
         }
       } else if (authType === 'oauth_token') {
         // Import full credentials including refresh token and expiry from Claude CLI
@@ -1101,6 +1108,57 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     })
   }
 
+  // Recursive directory scanner for workspace files
+  // Filters out internal directories (.craft-agent, node_modules, .git, etc.) and hidden files
+  // Returns only non-empty directories
+  async function scanWorkspaceDirectory(dirPath: string): Promise<import('../shared/types').SessionFile[]> {
+    const { readdir, stat } = await import('fs/promises')
+    const entries = await readdir(dirPath, { withFileTypes: true })
+    const files: import('../shared/types').SessionFile[] = []
+
+    // Internal directories to skip
+    const skipDirs = ['.craft-agent', 'node_modules', '.git', '.vscode', '.idea', 'dist', 'build', '.next', '.nuxt', '.output']
+
+    for (const entry of entries) {
+      // Skip hidden files and internal directories
+      if (entry.name.startsWith('.')) {
+        // Allow some common hidden files like .env, .gitignore, etc. but skip hidden directories
+        if (entry.isDirectory() || skipDirs.includes(entry.name)) continue
+      }
+      if (entry.isDirectory() && skipDirs.includes(entry.name)) continue
+
+      const fullPath = join(dirPath, entry.name)
+
+      if (entry.isDirectory()) {
+        // Recursively scan subdirectory
+        const children = await scanWorkspaceDirectory(fullPath)
+        // Only include non-empty directories
+        if (children.length > 0) {
+          files.push({
+            name: entry.name,
+            path: fullPath,
+            type: 'directory',
+            children,
+          })
+        }
+      } else {
+        const stats = await stat(fullPath)
+        files.push({
+          name: entry.name,
+          path: fullPath,
+          type: 'file',
+          size: stats.size,
+        })
+      }
+    }
+
+    // Sort: directories first, then alphabetically
+    return files.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+  }
+
   // Get files in session directory (recursive tree structure)
   ipcMain.handle(IPC_CHANNELS.GET_SESSION_FILES, async (_event, sessionId: string) => {
     const sessionPath = sessionManager.getSessionPath(sessionId)
@@ -1110,6 +1168,28 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       return await scanSessionDirectory(sessionPath)
     } catch (error) {
       ipcLog.error('Failed to get session files:', error)
+      return []
+    }
+  })
+
+  // Get files in workspace directory (recursive tree structure)
+  // Similar to session files but scans the workspace root directory
+  ipcMain.handle(IPC_CHANNELS.GET_WORKSPACE_FILES, async (_event, workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) {
+      ipcLog.error(`GET_WORKSPACE_FILES: Workspace not found: ${workspaceId}`)
+      return []
+    }
+
+    try {
+      // Scan workspace root directory, but exclude internal directories like .craft-agent
+      const { existsSync } = await import('fs')
+      if (!existsSync(workspace.rootPath)) {
+        return []
+      }
+      return await scanWorkspaceDirectory(workspace.rootPath)
+    } catch (error) {
+      ipcLog.error('Failed to get workspace files:', error)
       return []
     }
   })
