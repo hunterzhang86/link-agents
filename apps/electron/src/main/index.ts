@@ -177,11 +177,15 @@ app.whenReady().then(async () => {
 
   // Set dock icon on macOS (required for dev mode, bundled apps use Info.plist)
   if (process.platform === 'darwin' && app.dock) {
-    const dockIconPath = join(__dirname, '../resources/icon.png')
+    const dockIconPath = join(__dirname, '../resources/icon.icns')
     if (existsSync(dockIconPath)) {
       app.dock.setIcon(dockIconPath)
       // Initialize badge icon for canvas-based badge overlay
-      initBadgeIcon(dockIconPath)
+      // Use PNG for badge overlay as it's more compatible with canvas operations
+      const badgeIconPath = join(__dirname, '../resources/icon.png')
+      if (existsSync(badgeIconPath)) {
+        initBadgeIcon(badgeIconPath)
+      }
     }
 
     // Multi-instance dev: show instance number badge on dock icon
