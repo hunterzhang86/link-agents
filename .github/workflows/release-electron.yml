@@ -35,6 +35,11 @@ jobs:
         with:
           bun-version: "1.3.5"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
       - name: Build DMG (arm64)
         run: bash apps/electron/scripts/build-dmg.sh arm64
 
@@ -72,6 +77,11 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.3.5"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
 
       - name: Build DMG (x64)
         run: bash apps/electron/scripts/build-dmg.sh x64
@@ -111,6 +121,11 @@ jobs:
         with:
           bun-version: "1.3.5"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
       - name: Build AppImage (x64)
         run: bash apps/electron/scripts/build-linux.sh x64
 
@@ -148,6 +163,11 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.3.5"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
 
       - name: Build EXE (x64)
         run: powershell -ExecutionPolicy Bypass -File apps/electron/scripts/build-win.ps1
