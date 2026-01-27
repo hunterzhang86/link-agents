@@ -525,28 +525,43 @@ export class SessionManager {
       : [basePath]
 
     const resolvePackagedPath = (parts: string[], label: string): string | null => {
+      const triedPaths: string[] = []
       for (const root of packagedRoots) {
         if (!root) continue
         const candidate = join(root, ...parts)
-        if (existsSync(candidate)) return candidate
+        triedPaths.push(candidate)
+        if (existsSync(candidate)) {
+          sessionLog.info(`Found ${label} at: ${candidate}`)
+          return candidate
+        }
       }
-      sessionLog.warn(`${label} not found. Tried roots: ${packagedRoots.filter(Boolean).join(', ')}`)
+      sessionLog.warn(`${label} not found. Tried paths: ${triedPaths.join(', ')}`)
       return null
     }
 
-    // Resolve cli.js path - prefer packaged path, fallback to development path
+    // Resolve cli.js path
     let cliPath: string | null = null
+    
     if (app.isPackaged) {
+      // In packaged app: try multiple possible locations
       cliPath = resolvePackagedPath(
         ['node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js'],
         'Claude Code SDK'
       )
-    }
-
-    // In development: use process.cwd() (simpler and more reliable)
-    // This matches the solution provided in the README
-    if (!cliPath) {
+      
+      // If not found in standard location, log detailed debug info
+      if (!cliPath) {
+        sessionLog.error('Failed to find cli.js in packaged app. Debug info:')
+        sessionLog.error(`  app.getAppPath(): ${app.getAppPath()}`)
+        sessionLog.error(`  process.resourcesPath: ${process.resourcesPath}`)
+        sessionLog.error(`  __dirname: ${__dirname}`)
+        sessionLog.error(`  Tried roots: ${packagedRoots.filter(Boolean).join(', ')}`)
+      }
+    } else {
+      // In development: use process.cwd() (simpler and more reliable)
+      // This matches the solution provided in the README
       cliPath = join(process.cwd(), 'node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js')
+      sessionLog.info(`Development mode: using cli.js at: ${cliPath}`)
     }
 
     // Validate that the path exists and is a file

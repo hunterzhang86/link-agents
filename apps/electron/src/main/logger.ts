@@ -1,5 +1,7 @@
 import log from 'electron-log/main'
 import { app } from 'electron'
+import { join } from 'path'
+import { homedir } from 'os'
 
 let _isDebugMode: boolean | undefined
 
@@ -46,9 +48,39 @@ export function initializeLogger() {
     }
     log.transports.console.level = 'debug'
   } else {
-    // Disable file and console transports in production
-    log.transports.file.level = false
-    log.transports.console.level = false
+    // In production: enable info-level logging to file for debugging
+    // Explicitly set log file path to ensure it's created
+    const appName = app.getName()
+    let logDir: string
+    if (process.platform === 'darwin') {
+      logDir = join(homedir(), 'Library', 'Logs', appName)
+    } else if (process.platform === 'win32') {
+      logDir = join(process.env.APPDATA || join(homedir(), 'AppData', 'Roaming'), appName, 'logs')
+    } else {
+      logDir = join(homedir(), '.config', appName, 'logs')
+    }
+    
+    // Set the log file path explicitly
+    log.transports.file.resolvePathFn = () => join(logDir, 'main.log')
+    
+    log.transports.file.level = 'info'
+    log.transports.file.maxSize = 5 * 1024 * 1024 // 5MB
+    
+    // Disable console output in production (but keep error level for critical issues)
+    log.transports.console.level = 'error'
+    
+    // Force log file to be created immediately by writing a test message
+    // This ensures the log file path is available
+    const logPath = join(logDir, 'main.log')
+    log.info('=== Link Agents started ===')
+    log.info(`App version: ${app.getVersion()}`)
+    log.info(`Platform: ${process.platform}`)
+    log.info(`Arch: ${process.arch}`)
+    log.info(`Log file location: ${logPath}`)
+    
+    // Also output to console.error so it's visible in terminal if app is launched from command line
+    console.error(`[Link Agents] Log file: ${logPath}`)
+    console.error(`[Link Agents] To view logs: tail -f "${logPath}"`)
   }
 }
 
@@ -61,10 +93,9 @@ export const agentLog = log.scope('agent')
 
 /**
  * Get the path to the current log file.
- * Returns undefined if file logging is disabled.
+ * Returns the log file path in both debug and production modes.
  */
 export function getLogFilePath(): string | undefined {
-  if (!isDebugMode()) return undefined
   return log.transports.file.getFile()?.path
 }
 

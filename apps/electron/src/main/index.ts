@@ -147,6 +147,14 @@ async function createInitialWindows(): Promise<void> {
 app.whenReady().then(async () => {
   // Initialize logger configuration (must be after app is ready)
   initializeLogger()
+  
+  // Output log file path for debugging (especially useful in production)
+  const logFilePath = getLogFilePath()
+  if (logFilePath) {
+    mainLog.info('Log file location:', logFilePath)
+    // Also output to console.error so it's visible even if file logging hasn't started
+    console.error(`[Link Agents] Log file: ${logFilePath}`)
+  }
 
   // Enable debug/perf in dev mode (running from source)
   if (isDebugMode()) {
