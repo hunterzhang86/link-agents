@@ -515,28 +515,47 @@ export class SessionManager {
 
   async initialize(): Promise<void> {
     // Set path to Claude Code executable (cli.js from SDK)
-    // In packaged app: try app.getAppPath() first, then fall back to resources paths
-    // In development: use process.cwd()
+    // CRITICAL: The SDK uses import.meta.url to find cli.js, which breaks after esbuild bundling.
+    // We must explicitly set the path before creating any agents.
+    
+    // Setup path resolution for both packaged and development modes
     const basePath = app.isPackaged ? app.getAppPath() : process.cwd()
     const packagedRoots = app.isPackaged
       ? [basePath, join(process.resourcesPath, 'app'), process.resourcesPath]
       : [basePath]
 
-    const resolvePackagedPath = (parts: string[], label: string): string => {
+    const resolvePackagedPath = (parts: string[], label: string): string | null => {
       for (const root of packagedRoots) {
         if (!root) continue
         const candidate = join(root, ...parts)
         if (existsSync(candidate)) return candidate
       }
-      const error = `${label} not found. Tried roots: ${packagedRoots.filter(Boolean).join(', ')}`
+      sessionLog.warn(`${label} not found. Tried roots: ${packagedRoots.filter(Boolean).join(', ')}`)
+      return null
+    }
+
+    // Resolve cli.js path - prefer packaged path, fallback to development path
+    let cliPath: string | null = null
+    if (app.isPackaged) {
+      cliPath = resolvePackagedPath(
+        ['node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js'],
+        'Claude Code SDK'
+      )
+    }
+
+    // In development: use process.cwd() (simpler and more reliable)
+    // This matches the solution provided in the README
+    if (!cliPath) {
+      cliPath = join(process.cwd(), 'node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js')
+    }
+
+    // Validate that the path exists and is a file
+    if (!cliPath || !existsSync(cliPath)) {
+      const error = `Claude Code SDK cli.js not found at: ${cliPath}. This is required for the SDK to work.`
       sessionLog.error(error)
       throw new Error(error)
     }
 
-    const cliPath = resolvePackagedPath(
-      ['node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js'],
-      'Claude Code SDK'
-    )
     sessionLog.info('Setting pathToClaudeCodeExecutable:', cliPath)
     setPathToClaudeCodeExecutable(cliPath)
 
@@ -548,8 +567,12 @@ export class SessionManager {
     )
     // Skip interceptor on Windows development (--preload is bun-specific, not supported by node)
     if (process.platform !== 'win32' || app.isPackaged) {
-      sessionLog.info('Setting interceptorPath:', interceptorPath)
-      setInterceptorPath(interceptorPath)
+      if (interceptorPath) {
+        sessionLog.info('Setting interceptorPath:', interceptorPath)
+        setInterceptorPath(interceptorPath)
+      } else {
+        sessionLog.warn('Network interceptor not found, skipping (SDK will work without it)')
+      }
     } else {
       sessionLog.info('Skipping interceptor on Windows dev (node does not support --preload)')
     }
@@ -565,6 +588,11 @@ export class SessionManager {
         ['vendor', 'bun', bunBinary],
         'Bundled Bun runtime'
       )
+      if (!bunPath) {
+        const error = 'Bundled Bun runtime not found. This is required for the packaged app to work.'
+        sessionLog.error(error)
+        throw new Error(error)
+      }
       sessionLog.info('Setting executable:', bunPath)
       setExecutable(bunPath)
     } else {
