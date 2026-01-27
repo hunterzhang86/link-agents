@@ -124,32 +124,6 @@ xattr -c "$ELECTRON_DIR/vendor/bun/bun" 2>/dev/null || true
 # Ensure executable permissions
 chmod 755 "$ELECTRON_DIR/vendor/bun/bun"
 
-# 3.5. Download Git binary for macOS
-# Note: macOS typically has Git pre-installed, but we bundle it for consistency
-# We'll use the system Git if available
-echo "Setting up Git for macOS..."
-mkdir -p "$ELECTRON_DIR/vendor/git/bin"
-
-# Check if system git is available and copy it
-if command -v git &> /dev/null; then
-    SYSTEM_GIT_VERSION=$(git --version | cut -d' ' -f3)
-    echo "System Git version: $SYSTEM_GIT_VERSION"
-    # Copy system git binary
-    SYSTEM_GIT_PATH=$(which git)
-    cp "$SYSTEM_GIT_PATH" "$ELECTRON_DIR/vendor/git/bin/git"
-    # Clear extended attributes that might cause permission issues
-    xattr -c "$ELECTRON_DIR/vendor/git/bin/git" 2>/dev/null || true
-    # Ensure executable permissions
-    chmod 755 "$ELECTRON_DIR/vendor/git/bin/git"
-    echo "Using system Git: $SYSTEM_GIT_PATH"
-else
-    echo "WARNING: System Git not found. Please install Git via Homebrew or Xcode Command Line Tools."
-    echo "For now, the app will try to use system Git at runtime."
-    # Create a placeholder that will fall back to system git
-    touch "$ELECTRON_DIR/vendor/git/bin/git"
-    chmod 755 "$ELECTRON_DIR/vendor/git/bin/git"
-fi
-
 # 4. Copy SDK from root node_modules (monorepo hoisting)
 # Note: The SDK is hoisted to root node_modules by the package manager.
 # We copy it here because electron-builder only sees apps/electron/.

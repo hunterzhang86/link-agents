@@ -19,8 +19,6 @@ files:
   - packages/shared/src/network-interceptor.ts
   # Include bundled Bun runtime (platform-specific, set by build script)
   - vendor/bun/**/*
-  # Include bundled Git binary (platform-specific, set by build script)
-  - vendor/git/**/*
   - node_modules/@anthropic-ai/**/*
 
 extraMetadata:
@@ -66,17 +64,14 @@ mac:
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/arm64-linux"
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/x64-linux"
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/x64-win32"
-  # WORKAROUND: Exclude bun and git from regular files on macOS.
+  # WORKAROUND: Exclude bun from regular files on macOS.
   # electron-builder can have permission issues when copying executables.
   # Moving them to extraResources avoids permission errors.
     - "!vendor/bun/**/*"
-    - "!vendor/git/**/*"
-  # Copy bun and git as extraResources to avoid permission errors
+  # Copy bun as extraResources to avoid permission errors
   extraResources:
     - from: vendor/bun/bun
       to: vendor/bun/bun
-    - from: vendor/git/bin/git
-      to: vendor/git/bin/git
   # Code signing & notarization (disabled by default for local builds)
   # To enable: set CSC_LINK, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
   # notarize:
@@ -110,21 +105,16 @@ win:
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/x64-linux"
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/arm64-darwin"
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/x64-darwin"
-  # WORKAROUND: Exclude bun and git from regular files on Windows.
+  # WORKAROUND: Exclude bun from regular files on Windows.
   # electron-builder's npm node module collector causes EBUSY errors when copying
   # executables because it scans/locks files while simultaneously trying to copy them.
   # Moving them to extraResources avoids this by copying them before the collector runs.
   # See: https://github.com/electron-userland/electron-builder/issues/8250
     - "!vendor/bun/**/*"
-    - "!vendor/git/**/*"
-  # Copy bun.exe and git.exe as extraResources to avoid EBUSY file locking (see comment above)
+  # Copy bun.exe as extraResources to avoid EBUSY file locking (see comment above)
   extraResources:
     - from: vendor/bun/bun.exe
       to: vendor/bun/bun.exe
-    - from: vendor/git/bin/git.exe
-      to: vendor/git/bin/git.exe
-    - from: vendor/git/bin/*.dll
-      to: vendor/git/bin/
 
 nsis:
   oneClick: false

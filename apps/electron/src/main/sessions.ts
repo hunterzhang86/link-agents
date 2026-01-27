@@ -734,27 +734,10 @@ export class SessionManager {
       }
     }
 
-    // Initialize bundled git path for skill imports
-    if (app.isPackaged) {
-      const { getBundledGitPathForElectron, setBundledGitPath } = await import('@link-agents/shared/utils/git-path')
-      const gitPath = getBundledGitPathForElectron(
-        app.isPackaged,
-        basePath,
-        process.resourcesPath
-      )
-      if (gitPath) {
-        setBundledGitPath(gitPath)
-        sessionLog.info('Using bundled git:', gitPath)
-      } else {
-        sessionLog.warn('Bundled git not found, falling back to system git')
-        setBundledGitPath(null)
-      }
-    } else {
-      // In development, use system git
-      const { setBundledGitPath } = await import('@link-agents/shared/utils/git-path')
-      setBundledGitPath(null)
-      sessionLog.info('Using system git for development')
-    }
+    // Use system git for skill imports
+    const { setBundledGitPath } = await import('@link-agents/shared/utils/git-path')
+    setBundledGitPath(null)
+    sessionLog.info('Using system git for skill imports')
 
     // Set up authentication environment variables (critical for SDK to work)
     await this.reinitializeAuth()
