@@ -160,8 +160,22 @@ if (-not (Test-Path $SdkSource)) {
     exit 1
 }
 Write-Host "Copying SDK..."
-New-Item -ItemType Directory -Force -Path "$ElectronDir\node_modules\@anthropic-ai" | Out-Null
-Copy-Item -Recurse -Force $SdkSource "$ElectronDir\node_modules\@anthropic-ai\"
+$SdkSourceResolved = (Resolve-Path $SdkSource).Path
+$SdkDestRoot = "$ElectronDir\node_modules\@anthropic-ai"
+$SdkDest = "$SdkDestRoot\claude-agent-sdk"
+New-Item -ItemType Directory -Force -Path $SdkDestRoot | Out-Null
+if (Test-Path $SdkDest) {
+    Remove-Item -Recurse -Force $SdkDest -ErrorAction SilentlyContinue
+}
+# Use robocopy to reliably copy through pnpm symlinks/junctions.
+$robocopySdk = robocopy $SdkSourceResolved $SdkDest /E /NFL /NDL /NJH /NJS /NP /R:3 /W:2
+if ($LASTEXITCODE -ge 8) {
+    throw "robocopy failed copying SDK with exit code $LASTEXITCODE"
+}
+$SdkCli = Join-Path $SdkDest "cli.js"
+if (-not (Test-Path $SdkCli)) {
+    throw "SDK copy failed: missing cli.js at $SdkCli"
+}
 
 # 5. Copy interceptor
 $InterceptorSource = "$RootDir\packages\shared\src\network-interceptor.ts"
