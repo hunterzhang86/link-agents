@@ -40,6 +40,20 @@ jobs:
 
       - name: Build DMG (arm64)
         run: bash apps/electron/scripts/build-dmg.sh arm64
+      
+      - name: Verify DMG contains Claude SDK
+        run: |
+          set -euo pipefail
+          DMG="apps/electron/release/Link-Agents-arm64.dmg"
+          MOUNT_DIR="$(mktemp -d)"
+          hdiutil attach "$DMG" -nobrowse -mountpoint "$MOUNT_DIR"
+          CLI_PATH="$MOUNT_DIR/Link Agents.app/Contents/Resources/claude-agent-sdk/cli.js"
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "Missing Claude SDK cli.js in DMG at: $CLI_PATH"
+            hdiutil detach "$MOUNT_DIR" || true
+            exit 1
+          fi
+          hdiutil detach "$MOUNT_DIR"
 
       - name: Prepare artifact
         run: |
@@ -81,6 +95,20 @@ jobs:
 
       - name: Build DMG (x64)
         run: bash apps/electron/scripts/build-dmg.sh x64
+      
+      - name: Verify DMG contains Claude SDK
+        run: |
+          set -euo pipefail
+          DMG="apps/electron/release/Link-Agents-x64.dmg"
+          MOUNT_DIR="$(mktemp -d)"
+          hdiutil attach "$DMG" -nobrowse -mountpoint "$MOUNT_DIR"
+          CLI_PATH="$MOUNT_DIR/Link Agents.app/Contents/Resources/claude-agent-sdk/cli.js"
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "Missing Claude SDK cli.js in DMG at: $CLI_PATH"
+            hdiutil detach "$MOUNT_DIR" || true
+            exit 1
+          fi
+          hdiutil detach "$MOUNT_DIR"
 
       - name: Prepare artifact
         run: |
@@ -122,6 +150,18 @@ jobs:
 
       - name: Build AppImage (x64)
         run: bash apps/electron/scripts/build-linux.sh x64
+      
+      - name: Verify AppImage contains Claude SDK
+        run: |
+          set -euo pipefail
+          APPIMAGE="apps/electron/release/Craft-Agent-x64.AppImage"
+          chmod +x "$APPIMAGE"
+          "$APPIMAGE" --appimage-extract
+          CLI_PATH="squashfs-root/claude-agent-sdk/cli.js"
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "Missing Claude SDK cli.js in AppImage at: $CLI_PATH"
+            exit 1
+          fi
 
       - name: Prepare artifact
         run: |
@@ -164,6 +204,20 @@ jobs:
 
       - name: Build EXE (x64)
         run: powershell -ExecutionPolicy Bypass -File apps/electron/scripts/build-win.ps1
+      
+      - name: Verify EXE contains Claude SDK
+        shell: pwsh
+        run: |
+          $exe = "apps/electron/release/Link-Agents-x64.exe"
+          $tmp = New-Item -ItemType Directory -Force -Path ([System.IO.Path]::Combine($env:TEMP, "link-agents-exe"))
+          if (Test-Path $tmp.FullName) { Remove-Item -Recurse -Force $tmp.FullName }
+          New-Item -ItemType Directory -Force -Path $tmp.FullName | Out-Null
+          7z x $exe "-o$($tmp.FullName)" | Out-Null
+          $cli = Join-Path $tmp.FullName "claude-agent-sdk\\cli.js"
+          if (-not (Test-Path $cli)) {
+            Write-Error "Missing Claude SDK cli.js in EXE at: $cli"
+            exit 1
+          }
 
       - name: Prepare artifact
         shell: pwsh

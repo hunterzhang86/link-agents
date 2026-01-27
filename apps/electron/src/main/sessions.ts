@@ -592,6 +592,14 @@ export class SessionManager {
         ['node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js'],
         'Claude Code SDK'
       )
+
+      // Fallback: extraResources/claude-agent-sdk/cli.js
+      if (!cliPath) {
+        cliPath = resolvePackagedPath(
+          ['claude-agent-sdk', 'cli.js'],
+          'Claude Code SDK (extraResources)'
+        )
+      }
       
       // If still not found, try to search for it
       if (!cliPath) {

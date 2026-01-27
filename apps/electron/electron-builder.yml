@@ -28,6 +28,9 @@ extraMetadata:
 
 # Extra resources to bundle with the app (outside the app code)
 extraResources:
+  # Bundle Claude Agent SDK as extra resource for fallback path resolution
+  - from: node_modules/@anthropic-ai/claude-agent-sdk
+    to: claude-agent-sdk
   # macOS self-update script
   - from: scripts/self-update.sh
     to: self-update.sh
