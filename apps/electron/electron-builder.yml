@@ -24,21 +24,6 @@ files:
 extraMetadata:
   main: dist/main.cjs
 
-# Extra resources to bundle with the app (outside the app code)
-extraResources:
-  # Bundle Claude Agent SDK as extra resource for fallback path resolution
-  - from: node_modules/@anthropic-ai/claude-agent-sdk
-    to: claude-agent-sdk
-  # macOS self-update script
-  - from: scripts/self-update.sh
-    to: self-update.sh
-  # Windows self-update script
-  - from: scripts/self-update.ps1
-    to: self-update.ps1
-  # Linux AppImage self-update script
-  - from: scripts/self-update-linux.sh
-    to: self-update-linux.sh
-
 # Disable ASAR to avoid decompression overhead and click delays
 asar: false
 
@@ -70,6 +55,12 @@ mac:
     - "!vendor/bun/**/*"
   # Copy bun as extraResources to avoid permission errors
   extraResources:
+    # Bundle Claude Agent SDK as extra resource for fallback path resolution
+    - from: node_modules/@anthropic-ai/claude-agent-sdk
+      to: claude-agent-sdk
+    # macOS self-update script
+    - from: scripts/self-update.sh
+      to: self-update.sh
     - from: vendor/bun/bun
       to: vendor/bun/bun
   # Code signing & notarization (disabled by default for local builds)
@@ -113,6 +104,12 @@ win:
     - "!vendor/bun/**/*"
   # Copy bun.exe as extraResources to avoid EBUSY file locking (see comment above)
   extraResources:
+    # Bundle Claude Agent SDK as extra resource for fallback path resolution
+    - from: node_modules/@anthropic-ai/claude-agent-sdk
+      to: claude-agent-sdk
+    # Windows self-update script
+    - from: scripts/self-update.ps1
+      to: self-update.ps1
     - from: vendor/bun/bun.exe
       to: vendor/bun/bun.exe
 
@@ -141,3 +138,10 @@ linux:
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/x64-darwin"
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/x64-win32"
     - "!node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/arm64-linux"
+  extraResources:
+    # Bundle Claude Agent SDK as extra resource for fallback path resolution
+    - from: node_modules/@anthropic-ai/claude-agent-sdk
+      to: claude-agent-sdk
+    # Linux AppImage self-update script
+    - from: scripts/self-update-linux.sh
+      to: self-update-linux.sh
