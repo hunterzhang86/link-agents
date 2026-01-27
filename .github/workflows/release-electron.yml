@@ -213,6 +213,10 @@ jobs:
           if (Test-Path $tmp.FullName) { Remove-Item -Recurse -Force $tmp.FullName }
           New-Item -ItemType Directory -Force -Path $tmp.FullName | Out-Null
           7z x $exe "-o$($tmp.FullName)" | Out-Null
+          Write-Host "=== Debug: Extracted EXE tree (depth 6) ==="
+          Get-ChildItem -Path $tmp.FullName -Recurse -Depth 6 -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host $_.FullName
+          }
           $cli = Get-ChildItem -Path $tmp.FullName -Recurse -Filter cli.js -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -match "claude-agent-sdk[\\\\/]cli\.js$" } |
             Select-Object -First 1
