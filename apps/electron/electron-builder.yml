@@ -21,8 +21,6 @@ files:
   - vendor/bun/**/*
   # Include bundled Git binary (platform-specific, set by build script)
   - vendor/git/**/*
-  # Exclude everything else from node_modules
-  - "!node_modules/**/*"
   - node_modules/@anthropic-ai/**/*
 
 extraMetadata:
