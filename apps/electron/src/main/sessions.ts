@@ -518,11 +518,53 @@ export class SessionManager {
     // CRITICAL: The SDK uses import.meta.url to find cli.js, which breaks after esbuild bundling.
     // We must explicitly set the path before creating any agents.
     
+    sessionLog.info('=== Initializing SDK path resolution ===')
+    sessionLog.info(`app.isPackaged: ${app.isPackaged}`)
+    sessionLog.info(`process.cwd(): ${process.cwd()}`)
+    sessionLog.info(`__dirname: ${__dirname}`)
+    
     // Setup path resolution for both packaged and development modes
     const basePath = app.isPackaged ? app.getAppPath() : process.cwd()
-    const packagedRoots = app.isPackaged
-      ? [basePath, join(process.resourcesPath, 'app'), process.resourcesPath]
-      : [basePath]
+    sessionLog.info(`basePath: ${basePath}`)
+    
+    // Build comprehensive list of possible roots for packaged app
+    // This handles different packaging scenarios (DMG install, direct build, etc.)
+    const packagedRoots: string[] = []
+    if (app.isPackaged) {
+      // Standard locations
+      packagedRoots.push(app.getAppPath())
+      if (process.resourcesPath) {
+        packagedRoots.push(join(process.resourcesPath, 'app'))
+        packagedRoots.push(process.resourcesPath)
+      }
+      
+      // Also try relative to executable location (for DMG-installed apps)
+      // On macOS: executable is in Contents/MacOS/, app bundle is in Contents/Resources/app/
+      if (process.platform === 'darwin') {
+        const execPath = process.execPath // e.g., /Applications/Link Agents.app/Contents/MacOS/Link Agents
+        const appBundlePath = execPath.replace(/\/Contents\/MacOS\/[^/]+$/, '') // Remove /Contents/MacOS/AppName
+        const resourcesPath = join(appBundlePath, 'Contents', 'Resources', 'app')
+        if (resourcesPath !== app.getAppPath()) {
+          packagedRoots.push(resourcesPath)
+        }
+        packagedRoots.push(appBundlePath)
+      }
+      
+      // Try __dirname as fallback (dist directory in some build scenarios)
+      if (__dirname && !packagedRoots.includes(__dirname)) {
+        packagedRoots.push(__dirname)
+        packagedRoots.push(join(__dirname, '..'))
+      }
+    } else {
+      packagedRoots.push(basePath)
+    }
+    
+    if (app.isPackaged) {
+      sessionLog.info(`app.getAppPath(): ${app.getAppPath()}`)
+      sessionLog.info(`process.resourcesPath: ${process.resourcesPath}`)
+      sessionLog.info(`process.execPath: ${process.execPath}`)
+    }
+    sessionLog.info(`packagedRoots: ${packagedRoots.filter(Boolean).join(', ')}`)
 
     const resolvePackagedPath = (parts: string[], label: string): string | null => {
       const triedPaths: string[] = []
@@ -530,6 +572,7 @@ export class SessionManager {
         if (!root) continue
         const candidate = join(root, ...parts)
         triedPaths.push(candidate)
+        sessionLog.info(`Checking ${label} at: ${candidate} (exists: ${existsSync(candidate)})`)
         if (existsSync(candidate)) {
           sessionLog.info(`Found ${label} at: ${candidate}`)
           return candidate
@@ -544,16 +587,42 @@ export class SessionManager {
     
     if (app.isPackaged) {
       // In packaged app: try multiple possible locations
+      // Standard location: node_modules/@anthropic-ai/claude-agent-sdk/cli.js
       cliPath = resolvePackagedPath(
         ['node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js'],
         'Claude Code SDK'
       )
       
-      // If not found in standard location, log detailed debug info
+      // If still not found, try to search for it
+      if (!cliPath) {
+        sessionLog.warn('Standard path resolution failed, searching for cli.js...')
+        try {
+          const searchRoots = packagedRoots.filter(Boolean)
+          for (const root of searchRoots) {
+            const findResult = execSync(
+              `find "${root}" -name "cli.js" -path "*/claude-agent-sdk/cli.js" -type f 2>/dev/null | head -1`,
+              { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 }
+            )
+            if (findResult.trim()) {
+              const foundPath = findResult.trim().split('\n')[0]
+              sessionLog.info(`Found cli.js via search: ${foundPath}`)
+              if (existsSync(foundPath)) {
+                cliPath = foundPath
+                break
+              }
+            }
+          }
+        } catch (e) {
+          sessionLog.warn('Could not search for cli.js files:', e)
+        }
+      }
+      
+      // If still not found, log detailed debug info
       if (!cliPath) {
         sessionLog.error('Failed to find cli.js in packaged app. Debug info:')
         sessionLog.error(`  app.getAppPath(): ${app.getAppPath()}`)
         sessionLog.error(`  process.resourcesPath: ${process.resourcesPath}`)
+        sessionLog.error(`  process.execPath: ${process.execPath}`)
         sessionLog.error(`  __dirname: ${__dirname}`)
         sessionLog.error(`  Tried roots: ${packagedRoots.filter(Boolean).join(', ')}`)
       }
@@ -571,7 +640,10 @@ export class SessionManager {
       throw new Error(error)
     }
 
-    sessionLog.info('Setting pathToClaudeCodeExecutable:', cliPath)
+    sessionLog.info('=== SDK Path Resolution Complete ===')
+    sessionLog.info(`Setting pathToClaudeCodeExecutable: ${cliPath}`)
+    sessionLog.info(`Path exists: ${existsSync(cliPath)}`)
+    sessionLog.info(`Path is file: ${existsSync(cliPath) && require('fs').statSync(cliPath).isFile()}`)
     setPathToClaudeCodeExecutable(cliPath)
 
     // Set path to fetch interceptor for SDK subprocess
