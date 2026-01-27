@@ -42,7 +42,7 @@
     "electron:dev:electron": "sleep 2 && VITE_DEV_SERVER_URL=http://localhost:${CRAFT_VITE_PORT:-5173} CRAFT_CONFIG_DIR=${CRAFT_CONFIG_DIR:-} CRAFT_APP_NAME=\"${CRAFT_APP_NAME:-Link Agents}\" CRAFT_DEEPLINK_SCHEME=${CRAFT_DEEPLINK_SCHEME:-craftagents} CRAFT_INSTANCE_NUMBER=${CRAFT_INSTANCE_NUMBER:-} electron apps/electron",
     "electron:dev:electron:win": "powershell -Command \"Start-Sleep -Seconds 2; $env:VITE_DEV_SERVER_URL='http://localhost:5173'; electron apps/electron\"",
     "electron:dist": "bun run electron:build && (cd apps/electron && electron-builder --config electron-builder.yml --project .)",
-    "electron:dist:mac": "bun run electron:build && (cd apps/electron && electron-builder --config electron-builder.yml --project . --mac)",
+    "electron:dist:mac": "bash apps/electron/scripts/prepare-packaging.sh && bun run electron:build && (cd apps/electron && electron-builder --config electron-builder.yml --project . --mac)",
     "electron:dist:win": "bun run electron:build:win && (cd apps/electron && electron-builder --config electron-builder.yml --project . --win)",
     "electron:dist:linux": "bun run electron:build && (cd apps/electron && electron-builder --config electron-builder.yml --project . --linux)",
     "viewer:dev": "lsof -ti:5174 | xargs kill -9 2>/dev/null; vite dev --config apps/viewer/vite.config.ts --open /s/tz5-13I84pwK_he",
