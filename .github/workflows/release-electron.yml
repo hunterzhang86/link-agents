@@ -45,20 +45,20 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           mkdir -p dist
-          mv apps/electron/release/Link-Agents-arm64.dmg "dist/Craft-Agents-${VERSION}-mac-arm64.dmg"
+          mv apps/electron/release/Link-Agents-arm64.dmg "dist/Link-Agents-${VERSION}-mac-arm64.dmg"
 
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Craft-Agents-*-mac-arm64.dmg
+          files: dist/Link-Agents-*-mac-arm64.dmg
 
       - name: Upload workflow artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: Craft-Agents-mac-arm64
-          path: dist/Craft-Agents-*-mac-arm64.dmg
+          name: Link-Agents-mac-arm64
+          path: dist/Link-Agents-*-mac-arm64.dmg
 
   mac_x64:
     runs-on: macos-14-large
@@ -86,20 +86,20 @@ jobs:
         run: |
           VERSION="${RELEASE_TAG#v}"
           mkdir -p dist
-          mv apps/electron/release/Link-Agents-x64.dmg "dist/Craft-Agents-${VERSION}-mac-x64.dmg"
+          mv apps/electron/release/Link-Agents-x64.dmg "dist/Link-Agents-${VERSION}-mac-x64.dmg"
 
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Craft-Agents-*-mac-x64.dmg
+          files: dist/Link-Agents-*-mac-x64.dmg
 
       - name: Upload workflow artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: Craft-Agents-mac-x64
-          path: dist/Craft-Agents-*-mac-x64.dmg
+          name: Link-Agents-mac-x64
+          path: dist/Link-Agents-*-mac-x64.dmg
 
   linux_x64:
     runs-on: ubuntu-22.04
@@ -128,20 +128,20 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           mkdir -p dist
           # build-linux.sh renames Link-Agents-x86_64.AppImage to Craft-Agent-x64.AppImage
-          mv apps/electron/release/Craft-Agent-x64.AppImage "dist/Craft-Agents-${VERSION}-linux-x64.AppImage"
+          mv apps/electron/release/Craft-Agent-x64.AppImage "dist/Link-Agents-${VERSION}-linux-x64.AppImage"
 
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Craft-Agents-*-linux-x64.AppImage
+          files: dist/Link-Agents-*-linux-x64.AppImage
 
       - name: Upload workflow artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: Craft-Agents-linux-x64
-          path: dist/Craft-Agents-*-linux-x64.AppImage
+          name: Link-Agents-linux-x64
+          path: dist/Link-Agents-*-linux-x64.AppImage
 
   win_x64:
     runs-on: windows-2022
@@ -170,17 +170,17 @@ jobs:
         run: |
           $version = $env:RELEASE_TAG -replace '^v',''
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Move-Item "apps/electron/release/Link-Agents-x64.exe" "dist/Craft-Agents-$version-win-x64.exe"
+          Move-Item "apps/electron/release/Link-Agents-x64.exe" "dist/Link-Agents-$version-win-x64.exe"
 
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Craft-Agents-*-win-x64.exe
+          files: dist/Link-Agents-*-win-x64.exe
 
       - name: Upload workflow artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: Craft-Agents-win-x64
-          path: dist/Craft-Agents-*-win-x64.exe
+          name: Link-Agents-win-x64
+          path: dist/Link-Agents-*-win-x64.exe

@@ -80,7 +80,7 @@ if (-not $tag) {
 $version = $tag -replace '^v', ''
 Write-Info "Latest version: $version (tag: $tag)"
 
-$filename = "Craft-Agents-$version-$platform.exe"
+$filename = "Link-Agents-$version-$platform.exe"
 $installerUrl = "https://github.com/$GitHubRepo/releases/download/$tag/$filename"
 
 # Download installer with progress

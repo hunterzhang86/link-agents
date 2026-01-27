@@ -229,7 +229,7 @@ fi
 version="${tag_name#v}"
 info "Latest version: $version (tag: $tag_name)"
 
-filename="Craft-Agents-${version}-${platform}.${ext}"
+filename="Link-Agents-${version}-${platform}.${ext}"
 installer_url="https://github.com/$GITHUB_REPO/releases/download/$tag_name/$filename"
 installer_path="$DOWNLOAD_DIR/$filename"
 
