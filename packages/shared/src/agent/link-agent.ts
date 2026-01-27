@@ -1,76 +1,61 @@
-import { query, createSdkMcpServer, tool, AbortError, type Query, type SDKMessage, type SDKUserMessage, type SDKAssistantMessageError, type Options } from '@anthropic-ai/claude-agent-sdk';
-import { getDefaultOptions } from './options.ts';
+import { AbortError, createSdkMcpServer, query, tool, type Options, type Query, type SDKAssistantMessageError, type SDKMessage, type SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
-import { getSystemPrompt, getDateTimeContext, getWorkingDirectoryContext } from '../prompts/system.ts';
+import { getDateTimeContext, getSystemPrompt, getWorkingDirectoryContext } from '../prompts/system.ts';
+import { getDefaultOptions } from './options.ts';
 // Plan types are used by UI components; not needed in craft-agent.ts since Safe Mode is user-controlled
-import { parseError, type AgentError } from './errors.ts';
-import { runErrorDiagnostics } from './diagnostics.ts';
-import { loadStoredConfig, loadConfigDefaults, type Workspace } from '../config/storage.ts';
-import { isLocalMcpEnabled } from '../workspaces/storage.ts';
-import { loadPlanFromPath, type SessionConfig as Session } from '../sessions/storage.ts';
 import { DEFAULT_MODEL } from '../config/models.ts';
-import { getCredentialManager } from '../credentials/index.ts';
-import { updatePreferences, loadPreferences, formatPreferencesForPrompt, type UserPreferences } from '../config/preferences.ts';
-import type { FileAttachment } from '../utils/files.ts';
-import { debug } from '../utils/debug.ts';
-import { estimateTokens, summarizeLargeResult, TOKEN_LIMIT } from '../utils/summarize.ts';
-import {
-  getSessionPlansDir,
-  getLastPlanFilePath,
-  clearPlanFileState,
-  registerSessionScopedToolCallbacks,
-  unregisterSessionScopedToolCallbacks,
-  getSessionScopedTools,
-  cleanupSessionScopedTools,
-  type AuthRequest,
-} from './session-scoped-tools.ts';
-import {
-  getPermissionMode,
-  setPermissionMode,
-  cyclePermissionMode,
-  initializeModeState,
-  cleanupModeState,
-  formatSessionState,
-  shouldAllowToolInMode,
-  blockWithReason,
-  isApiEndpointAllowed,
-  type PermissionMode,
-  PERMISSION_MODE_CONFIG,
-  SAFE_MODE_CONFIG,
-} from './mode-manager.ts';
-import { type PermissionsContext, permissionsConfigCache } from './permissions-config.ts';
-import { getSessionPlansPath, getSessionPath } from '../sessions/storage.ts';
-import { expandPath } from '../utils/paths.ts';
-import {
-  ConfigWatcher,
-  createConfigWatcher,
-  type ConfigWatcherCallbacks,
-} from '../config/watcher.ts';
+import { formatPreferencesForPrompt, loadPreferences, updatePreferences, type UserPreferences } from '../config/preferences.ts';
+import { loadConfigDefaults, loadStoredConfig, type Workspace } from '../config/storage.ts';
 import type { ValidationIssue } from '../config/validators.ts';
-import { type ThinkingLevel, getThinkingTokens, DEFAULT_THINKING_LEVEL } from './thinking-levels.ts';
-import type { LoadedSource } from '../sources/types.ts';
+import {
+    ConfigWatcher,
+    createConfigWatcher
+} from '../config/watcher.ts';
+import { getSessionPath, getSessionPlansPath, type SessionConfig as Session } from '../sessions/storage.ts';
 import { sourceNeedsAuthentication } from '../sources/credential-manager.ts';
+import type { LoadedSource } from '../sources/types.ts';
+import { debug } from '../utils/debug.ts';
+import type { FileAttachment } from '../utils/files.ts';
+import { expandPath } from '../utils/paths.ts';
+import { estimateTokens, summarizeLargeResult, TOKEN_LIMIT } from '../utils/summarize.ts';
+import { isLocalMcpEnabled } from '../workspaces/storage.ts';
+import { runErrorDiagnostics } from './diagnostics.ts';
+import { parseError, type AgentError } from './errors.ts';
+import {
+    blockWithReason,
+    cleanupModeState,
+    formatSessionState,
+    getPermissionMode,
+    initializeModeState,
+    isApiEndpointAllowed,
+    shouldAllowToolInMode,
+    type PermissionMode
+} from './mode-manager.ts';
+import { permissionsConfigCache, type PermissionsContext } from './permissions-config.ts';
+import {
+    cleanupSessionScopedTools,
+    getSessionScopedTools,
+    registerSessionScopedToolCallbacks,
+    type AuthRequest
+} from './session-scoped-tools.ts';
+import { getThinkingTokens, type ThinkingLevel } from './thinking-levels.ts';
 
 // Re-export permission mode functions for application usage
 export {
-  // Permission mode API
-  getPermissionMode,
-  setPermissionMode,
-  cyclePermissionMode,
-  subscribeModeChanges,
-  type PermissionMode,
-  PERMISSION_MODE_ORDER,
-  PERMISSION_MODE_CONFIG,
+    cyclePermissionMode,
+    // Permission mode API
+    getPermissionMode, PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, setPermissionMode, subscribeModeChanges,
+    type PermissionMode
 } from './mode-manager.ts';
-// Documentation is served via local files at ~/.craft-agent/docs/
+export type { AgentEvent };
+// Documentation is served via local files at ~/.link-agents/docs/
 
 // Import and re-export AgentEvent from core (single source of truth)
 import type { AgentEvent } from '@link-agents/core/types';
-export type { AgentEvent };
 
 // Re-export types for UI components
-export type { LoadedSource } from '../sources/types.ts';
+    export type { LoadedSource } from '../sources/types.ts';
 
 /**
  * Reason for aborting agent execution.

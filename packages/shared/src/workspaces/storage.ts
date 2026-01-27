@@ -3,33 +3,31 @@
  *
  * CRUD operations for workspaces.
  * Workspaces can be stored anywhere on disk via rootPath.
- * Default location: ~/.craft-agent/workspaces/
+ * Default location: ~/.link-agents/workspaces/
  */
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-  readdirSync,
-  rmSync,
-  statSync,
-} from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
 import { randomUUID } from 'crypto';
-import { expandPath, toPortablePath } from '../utils/paths.ts';
-import { getDefaultStatusConfig, saveStatusConfig, ensureDefaultIconFiles } from '../statuses/storage.ts';
-import { loadConfigDefaults } from '../config/storage.ts';
+import {
+    existsSync,
+    mkdirSync,
+    readdirSync,
+    readFileSync,
+    rmSync,
+    writeFileSync
+} from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 import { DEFAULT_MODEL } from '../config/models.ts';
+import { loadConfigDefaults } from '../config/storage.ts';
+import { ensureDefaultIconFiles, getDefaultStatusConfig, saveStatusConfig } from '../statuses/storage.ts';
+import { expandPath, toPortablePath } from '../utils/paths.ts';
 import type {
-  WorkspaceConfig,
-  CreateWorkspaceInput,
-  LoadedWorkspace,
-  WorkspaceSummary,
+    LoadedWorkspace,
+    WorkspaceConfig,
+    WorkspaceSummary
 } from './types.ts';
 
-const CONFIG_DIR = join(homedir(), '.craft-agent');
+const CONFIG_DIR = join(homedir(), '.link-agents');
 const DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
 
 // ============================================================
@@ -37,7 +35,7 @@ const DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
 // ============================================================
 
 /**
- * Get the default workspaces directory (~/.craft-agent/workspaces/)
+ * Get the default workspaces directory (~/.link-agents/workspaces/)
  */
 export function getDefaultWorkspacesDir(): string {
   return DEFAULT_WORKSPACES_DIR;
@@ -330,7 +328,7 @@ export function renameWorkspaceFolder(rootPath: string, newName: string): boolea
 
 /**
  * Discover workspace folders in the default location that have valid config.json
- * Returns paths to valid workspaces found in ~/.craft-agent/workspaces/
+ * Returns paths to valid workspaces found in ~/.link-agents/workspaces/
  */
 export function discoverWorkspacesInDefaultLocation(): string[] {
   const discovered: string[] = [];

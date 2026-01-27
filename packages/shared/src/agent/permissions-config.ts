@@ -5,25 +5,25 @@
  * Users can create permissions.json files to extend the default rules.
  *
  * File locations:
- * - Workspace: ~/.craft-agent/workspaces/{slug}/permissions.json
- * - Per-source: ~/.craft-agent/workspaces/{slug}/sources/{sourceSlug}/permissions.json
+ * - Workspace: ~/.link-agents/workspaces/{slug}/permissions.json
+ * - Per-source: ~/.link-agents/workspaces/{slug}/sources/{sourceSlug}/permissions.json
  *
  * Rules are additive - custom configs extend the defaults (more permissive).
  */
 
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { debug } from '../utils/debug.ts';
 import { CONFIG_DIR } from '../config/paths.ts';
 import { getSourcePath } from '../sources/storage.ts';
+import { debug } from '../utils/debug.ts';
 import {
-  SAFE_MODE_CONFIG,
-  PermissionsConfigSchema,
-  type ApiEndpointRule,
-  type PermissionsConfigFile,
-  type CompiledApiEndpointRule,
-  type CompiledBashPattern,
-  type PermissionPaths,
+    PermissionsConfigSchema,
+    SAFE_MODE_CONFIG,
+    type ApiEndpointRule,
+    type CompiledApiEndpointRule,
+    type CompiledBashPattern,
+    type PermissionPaths,
+    type PermissionsConfigFile,
 } from './mode-types.ts';
 
 // ============================================================
@@ -34,7 +34,7 @@ const APP_PERMISSIONS_DIR = join(CONFIG_DIR, 'permissions');
 
 /**
  * Get the app-level permissions directory.
- * Default permissions are stored at ~/.craft-agent/permissions/
+ * Default permissions are stored at ~/.link-agents/permissions/
  */
 export function getAppPermissionsDir(): string {
   return APP_PERMISSIONS_DIR;
@@ -76,7 +76,7 @@ export function ensureDefaultPermissions(bundledPermissionsDir?: string): void {
 }
 
 /**
- * Load default permissions from ~/.craft-agent/permissions/default.json
+ * Load default permissions from ~/.link-agents/permissions/default.json
  * Returns null if file doesn't exist or is invalid.
  */
 export function loadDefaultPermissions(): PermissionsCustomConfig | null {
@@ -99,12 +99,10 @@ export function loadDefaultPermissions(): PermissionsCustomConfig | null {
 
 // Re-export types from mode-types for external consumers
 export {
-  PermissionsConfigSchema,
-  type ApiEndpointRule,
-  type PermissionsConfigFile,
-  type CompiledApiEndpointRule,
-  type CompiledBashPattern,
-  type PermissionPaths,
+    PermissionsConfigSchema,
+    type ApiEndpointRule, type CompiledApiEndpointRule,
+    type CompiledBashPattern,
+    type PermissionPaths, type PermissionsConfigFile
 };
 
 // ============================================================
@@ -370,12 +368,12 @@ class PermissionsConfigCache {
   private sourceConfigs: Map<string, PermissionsCustomConfig | null> = new Map();
   private mergedConfigs: Map<string, MergedPermissionsConfig> = new Map();
 
-  // App-level default permissions (loaded from ~/.craft-agent/permissions/default.json)
+  // App-level default permissions (loaded from ~/.link-agents/permissions/default.json)
   private defaultConfig: PermissionsCustomConfig | null | undefined = undefined; // undefined = not loaded yet
 
   /**
    * Get or load app-level default permissions
-   * These come from ~/.craft-agent/permissions/default.json
+   * These come from ~/.link-agents/permissions/default.json
    */
   private getDefaultConfig(): PermissionsCustomConfig | null {
     if (this.defaultConfig === undefined) {

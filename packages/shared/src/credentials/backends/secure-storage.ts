@@ -1,7 +1,7 @@
 /**
  * Secure Storage Backend
  *
- * Stores credentials in an encrypted file at ~/.craft-agent/credentials.enc
+ * Stores credentials in an encrypted file at ~/.link-agents/credentials.enc
  * Uses AES-256-GCM for authenticated encryption.
  *
  * Encryption key is derived from machine-specific data (hostname, username, homedir)
@@ -21,22 +21,22 @@
  */
 
 import {
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-  pbkdf2Sync,
-  createHash,
+    createCipheriv,
+    createDecipheriv,
+    createHash,
+    pbkdf2Sync,
+    randomBytes,
 } from 'crypto';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
-import { hostname, userInfo, homedir } from 'os';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
+import { homedir, hostname, userInfo } from 'os';
+import { join } from 'path';
 
-import type { CredentialBackend } from './types.ts';
 import type { CredentialId, StoredCredential } from '../types.ts';
-import { credentialIdToAccount, accountToCredentialId } from '../types.ts';
+import { accountToCredentialId, credentialIdToAccount } from '../types.ts';
+import type { CredentialBackend } from './types.ts';
 
 // File location
-const CREDENTIALS_DIR = join(homedir(), '.craft-agent');
+const CREDENTIALS_DIR = join(homedir(), '.link-agents');
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.enc');
 
 // File format constants

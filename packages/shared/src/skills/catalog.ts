@@ -4,12 +4,12 @@
  * Functions for fetching and caching skills from GitHub repository.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
+import { dirname, join } from 'path';
 import type { SkillCatalog, SkillCatalogEntry } from './types.ts';
 
-const CATALOG_CACHE_PATH = join(homedir(), '.craft-agent', 'skills-catalog.json');
+const CATALOG_CACHE_PATH = join(homedir(), '.link-agents', 'skills-catalog.json');
 const DEFAULT_CATALOG_TTL = 1000 * 60 * 60 * 24; // 24 hours
 const DEFAULT_GITHUB_SKILLS_REPO = 'https://github.com/anthropics/skills';
 const DEFAULT_GITHUB_API_BASE = 'https://api.github.com/repos/anthropics/skills';

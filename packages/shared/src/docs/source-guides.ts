@@ -5,7 +5,7 @@
  * 1. Service Knowledge - Persistent understanding injected at runtime
  * 2. Setup Hints - One-time guidance for setup agent
  *
- * Guides are stored at ~/.craft-agent/docs/source-guides/ and copied on first run.
+ * Guides are stored at ~/.link-agents/docs/source-guides/ and copied on first run.
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
@@ -15,7 +15,7 @@ import { isDebugEnabled } from '../utils/debug.ts';
 import { getAppVersion } from '../version/app-version.ts';
 
 // Compute path directly to avoid circular dependency with ./index.ts
-const CONFIG_DIR = join(homedir(), '.craft-agent');
+const CONFIG_DIR = join(homedir(), '.link-agents');
 const DOCS_DIR = join(CONFIG_DIR, 'docs');
 const SOURCE_GUIDES_DIR = join(DOCS_DIR, 'source-guides');
 

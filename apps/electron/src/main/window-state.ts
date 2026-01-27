@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { mainLog } from './logger'
-import { join } from 'path'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
+import { join } from 'path'
+import { mainLog } from './logger'
 
 export interface WindowBounds {
   x: number
@@ -23,7 +23,7 @@ export interface WindowState {
   lastFocusedWorkspaceId?: string
 }
 
-const CONFIG_DIR = join(homedir(), '.craft-agent')
+const CONFIG_DIR = join(homedir(), '.link-agents')
 const WINDOW_STATE_FILE = join(CONFIG_DIR, 'window-state.json')
 
 /**

@@ -5,13 +5,13 @@
  * Browser handles caching - no need to save files locally.
  */
 
-import { debug } from './debug.ts';
+import { existsSync, readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { debug } from './debug.ts';
 
 // Cache path for persisted provider domains
-const CRAFT_AGENT_DIR = join(homedir(), '.craft-agent');
+const CRAFT_AGENT_DIR = join(homedir(), '.link-agents');
 const PROVIDER_DOMAINS_CACHE_PATH = join(CRAFT_AGENT_DIR, 'provider-domains.json');
 
 // Google Favicon V2 API - free, reliable, no API key needed

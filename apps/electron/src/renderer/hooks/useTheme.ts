@@ -1,16 +1,16 @@
-import { useMemo } from 'react'
-import {
-  resolveTheme,
-  DEFAULT_THEME,
-  type ThemeOverrides,
-  type ThemeFile,
-  type ShikiThemeConfig,
-} from '@config/theme'
 import { useTheme as useThemeContext } from '@/context/ThemeContext'
+import {
+    DEFAULT_THEME,
+    resolveTheme,
+    type ShikiThemeConfig,
+    type ThemeFile,
+    type ThemeOverrides,
+} from '@config/theme'
+import { useMemo } from 'react'
 
 interface UseThemeOptions {
   /**
-   * App-level theme override (from ~/.craft-agent/theme.json)
+   * App-level theme override (from ~/.link-agents/theme.json)
    * When provided, merges with the preset theme from context.
    */
   appTheme?: ThemeOverrides | null

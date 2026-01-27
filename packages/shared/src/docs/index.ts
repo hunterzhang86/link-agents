@@ -4,7 +4,7 @@
  * Provides access to built-in documentation that Claude can reference
  * when performing configuration tasks (sources, agents, permissions, etc.).
  *
- * Docs are stored at ~/.craft-agent/docs/ and copied on first run.
+ * Docs are stored at ~/.link-agents/docs/ and copied on first run.
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
@@ -14,7 +14,7 @@ import { isDebugEnabled } from '../utils/debug.ts';
 import { getAppVersion } from '../version/app-version.ts';
 import { initializeSourceGuides } from './source-guides.ts';
 
-const CONFIG_DIR = join(homedir(), '.craft-agent');
+const CONFIG_DIR = join(homedir(), '.link-agents');
 const DOCS_DIR = join(CONFIG_DIR, 'docs');
 
 // Track if docs have been initialized this session (prevents re-init on hot reload)
@@ -39,13 +39,13 @@ export function getDocPath(filename: string): string {
  * Use these constants instead of hardcoding paths to keep references in sync.
  */
 export const DOC_REFS = {
-  sources: '~/.craft-agent/docs/sources.md',
-  permissions: '~/.craft-agent/docs/permissions.md',
-  skills: '~/.craft-agent/docs/skills.md',
-  themes: '~/.craft-agent/docs/themes.md',
-  statuses: '~/.craft-agent/docs/statuses.md',
-  sourceGuides: '~/.craft-agent/docs/source-guides/',
-  docsDir: '~/.craft-agent/docs/',
+  sources: '~/.link-agents/docs/sources.md',
+  permissions: '~/.link-agents/docs/permissions.md',
+  skills: '~/.link-agents/docs/skills.md',
+  themes: '~/.link-agents/docs/themes.md',
+  statuses: '~/.link-agents/docs/statuses.md',
+  sourceGuides: '~/.link-agents/docs/source-guides/',
+  docsDir: '~/.link-agents/docs/',
 } as const;
 
 /**
@@ -166,7 +166,7 @@ When a user wants to add a new source, follow this conversational setup process 
 **Before doing anything else**, check if a specialized guide exists for this service:
 
 \`\`\`
-~/.craft-agent/docs/source-guides/
+~/.link-agents/docs/source-guides/
 ├── github.com.md      # GitHub - CRITICAL: check for gh CLI first!
 ├── gmail.com.md       # Gmail
 ├── google-calendar.md # Google Calendar
@@ -352,7 +352,7 @@ Would you like me to show you what issues are currently open?
 ## Overview
 
 Sources are stored as folders under:
-- \`~/.craft-agent/workspaces/{workspaceId}/sources/{sourceSlug}/\`
+- \`~/.link-agents/workspaces/{workspaceId}/sources/{sourceSlug}/\`
 
 Each source folder contains:
 - \`config.json\` - Source configuration (required)
@@ -703,7 +703,7 @@ When using URLs or domains, \`source_test\` will download and cache the icon loc
 ## Provider Domain Cache
 
 For favicon resolution, a cache maps provider names to their canonical domains at:
-\`~/.craft-agent/provider-domains.json\`
+\`~/.link-agents/provider-domains.json\`
 
 **Format:**
 \`\`\`json
@@ -770,7 +770,7 @@ Technical steps:
 
 1. Create the source folder:
    \`\`\`bash
-   mkdir -p ~/.craft-agent/workspaces/{ws}/sources/my-source
+   mkdir -p ~/.link-agents/workspaces/{ws}/sources/my-source
    \`\`\`
 
 2. Write \`config.json\` with appropriate settings (see schemas above)
@@ -844,7 +844,7 @@ Link Agent uses **the identical SKILL.md format** as the Claude Code SDK. This m
 
 When a skill is invoked (e.g., \`/commit\`):
 
-1. **Workspace skill checked first** - If \`~/.craft-agent/workspaces/{id}/skills/commit/SKILL.md\` exists, it's used
+1. **Workspace skill checked first** - If \`~/.link-agents/workspaces/{id}/skills/commit/SKILL.md\` exists, it's used
 2. **SDK skill as fallback** - If no workspace skill exists, the built-in SDK skill is used
 
 This allows you to:
@@ -856,7 +856,7 @@ This allows you to:
 
 Skills are stored as folders:
 \`\`\`
-~/.craft-agent/workspaces/{workspaceId}/skills/{slug}/
+~/.link-agents/workspaces/{workspaceId}/skills/{slug}/
 ├── SKILL.md          # Required: Skill definition (same format as Claude Code SDK)
 ├── icon.svg          # Recommended: Skill icon for UI display
 ├── icon.png          # Alternative: PNG icon
@@ -925,7 +925,7 @@ alwaysAllow:
 ### 1. Create the skill directory
 
 \`\`\`bash
-mkdir -p ~/.craft-agent/workspaces/{ws}/skills/my-skill
+mkdir -p ~/.link-agents/workspaces/{ws}/skills/my-skill
 \`\`\`
 
 ### 2. Write SKILL.md
@@ -1067,7 +1067,7 @@ globs: ["src/**/*.ts", "src/**/*.tsx"]
 
 To customize a built-in SDK skill like \`/commit\`:
 
-1. Create \`~/.craft-agent/workspaces/{ws}/skills/commit/SKILL.md\`
+1. Create \`~/.link-agents/workspaces/{ws}/skills/commit/SKILL.md\`
 2. Write your custom instructions
 3. Add an icon
 4. Run \`skill_validate({ skillSlug: "commit" })\`
@@ -1116,8 +1116,8 @@ Explore mode is a read-only mode that blocks potentially destructive operations.
 Custom permission rules let you allow specific operations that would otherwise be blocked.
 
 Permission files are located at:
-- Workspace: \`~/.craft-agent/workspaces/{slug}/permissions.json\`
-- Source: \`~/.craft-agent/workspaces/{slug}/sources/{source}/permissions.json\`
+- Workspace: \`~/.link-agents/workspaces/{slug}/permissions.json\`
+- Source: \`~/.link-agents/workspaces/{slug}/sources/{source}/permissions.json\`
 
 ## Auto-Scoping for Source Permissions
 
@@ -1154,7 +1154,7 @@ The system converts it to \`mcp__<sourceSlug>__.*list\` internally. This means:
   ],
   "allowedWritePaths": [
     "/tmp/**",
-    "~/.craft-agent/**"
+    "~/.link-agents/**"
   ]
 }
 \`\`\`
@@ -1231,7 +1231,7 @@ Glob patterns for directories where writes are allowed.
 {
   "allowedWritePaths": [
     "/tmp/**",
-    "~/.craft-agent/**",
+    "~/.link-agents/**",
     "/path/to/project/output/**"
   ]
 }
@@ -1305,8 +1305,8 @@ This guide explains how to customize the visual theme of Link Agent.
 ## Overview
 
 Link Agent uses a 6-color theme system with cascading configuration:
-- **App-level theme**: \`~/.craft-agent/theme.json\` - Global defaults
-- **Workspace-level theme**: \`~/.craft-agent/workspaces/{id}/theme.json\` - Per-workspace overrides
+- **App-level theme**: \`~/.link-agents/theme.json\` - Global defaults
+- **Workspace-level theme**: \`~/.link-agents/workspaces/{id}/theme.json\` - Per-workspace overrides
 
 Workspace themes override app-level themes. Both are optional - the app has sensible defaults.
 
@@ -1414,7 +1414,7 @@ The built-in default theme uses OKLCH colors optimized for accessibility:
 \`\`\`
 
 ### Workspace-specific theme
-Create \`~/.craft-agent/workspaces/{id}/theme.json\`:
+Create \`~/.link-agents/workspaces/{id}/theme.json\`:
 \`\`\`json
 {
   "accent": "oklch(0.60 0.20 150)"
@@ -1424,7 +1424,7 @@ This workspace will use green accent while others use the app default.
 
 ## Cascading Behavior
 
-1. **App theme** (\`~/.craft-agent/theme.json\`) sets global defaults
+1. **App theme** (\`~/.link-agents/theme.json\`) sets global defaults
 2. **Workspace theme** overrides app theme for that workspace only
 3. **Built-in defaults** fill any unspecified colors
 
@@ -1451,7 +1451,7 @@ Theme changes are applied immediately - no restart needed. Edit theme.json and t
 
 ### Creating an App Theme
 \`\`\`bash
-# Create or edit ~/.craft-agent/theme.json
+# Create or edit ~/.link-agents/theme.json
 \`\`\`
 
 \`\`\`json
@@ -1463,7 +1463,7 @@ Theme changes are applied immediately - no restart needed. Edit theme.json and t
 ### Creating a Workspace Theme
 \`\`\`bash
 # Create theme in workspace folder
-# ~/.craft-agent/workspaces/{workspaceId}/theme.json
+# ~/.link-agents/workspaces/{workspaceId}/theme.json
 \`\`\`
 
 \`\`\`json
@@ -1514,8 +1514,8 @@ Session statuses represent workflow states. Each workspace has its own status co
 
 ## Storage Locations
 
-- Config: \`~/.craft-agent/workspaces/{id}/statuses/config.json\`
-- Icons: \`~/.craft-agent/workspaces/{id}/statuses/icons/\`
+- Config: \`~/.link-agents/workspaces/{id}/statuses/config.json\`
+- Icons: \`~/.link-agents/workspaces/{id}/statuses/icons/\`
 
 ## Default Statuses
 

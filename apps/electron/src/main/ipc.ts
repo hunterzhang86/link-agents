@@ -1,21 +1,21 @@
-import { app, ipcMain, nativeTheme, nativeImage, dialog, shell, BrowserWindow } from 'electron'
-import { readFile, realpath, mkdir, writeFile, unlink, rm } from 'fs/promises'
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-import { normalize, isAbsolute, join, basename, dirname, resolve } from 'path'
-import { homedir, tmpdir } from 'os'
-import { randomUUID } from 'crypto'
-import { SessionManager } from './sessions'
-import { ipcLog, windowLog } from './logger'
-import { WindowManager } from './window-manager'
-import { registerOnboardingHandlers } from './onboarding'
-import { IPC_CHANNELS, type FileAttachment, type StoredAttachment, type AuthType, type BillingMethodInfo, type SendMessageOptions } from '../shared/types'
-import { readFileAttachment, perf, validateImageForClaudeAPI, IMAGE_LIMITS } from '@link-agents/shared/utils'
-import { getAuthType, setAuthType, getPreferencesPath, getModel, setModel, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, type Workspace } from '@link-agents/shared/config'
-import { getSessionAttachmentsPath } from '@link-agents/shared/sessions'
-import { loadWorkspaceSources, getSourcesBySlugs, type LoadedSource } from '@link-agents/shared/sources'
 import { isValidThinkingLevel } from '@link-agents/shared/agent/thinking-levels'
+import { addWorkspace, deleteSessionDraft, getAllSessionDrafts, getAuthType, getModel, getPreferencesPath, getSessionDraft, getWorkspaceByNameOrId, setActiveWorkspace, setAuthType, setModel, setSessionDraft, type Workspace } from '@link-agents/shared/config'
 import { getCredentialManager } from '@link-agents/shared/credentials'
+import { getSessionAttachmentsPath } from '@link-agents/shared/sessions'
+import { loadWorkspaceSources } from '@link-agents/shared/sources'
+import { IMAGE_LIMITS, perf, readFileAttachment, validateImageForClaudeAPI } from '@link-agents/shared/utils'
+import { randomUUID } from 'crypto'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, nativeTheme, shell } from 'electron'
+import { mkdir, readFile, realpath, unlink, writeFile } from 'fs/promises'
 import { MarkItDown } from 'markitdown-js'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'os'
+import { dirname, isAbsolute, join, normalize, resolve } from 'path'
+import { IPC_CHANNELS, type AuthType, type BillingMethodInfo, type FileAttachment, type SendMessageOptions, type StoredAttachment } from '../shared/types'
+import { ipcLog, windowLog } from './logger'
+import { registerOnboardingHandlers } from './onboarding'
+import { SessionManager } from './sessions'
+import { WindowManager } from './window-manager'
 
 /**
  * Sanitizes a filename to prevent path traversal and filesystem issues.
@@ -146,7 +146,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
   // Check if a workspace slug already exists (for validation before creation)
   ipcMain.handle(IPC_CHANNELS.CHECK_WORKSPACE_SLUG, async (_event, slug: string) => {
-    const defaultWorkspacesDir = join(homedir(), '.craft-agent', 'workspaces')
+    const defaultWorkspacesDir = join(homedir(), '.link-agents', 'workspaces')
     const workspacePath = join(defaultWorkspacesDir, slug)
     const exists = existsSync(workspacePath)
     return { exists, path: workspacePath }
@@ -815,7 +815,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       }
 
       // Delete the config file
-      const configPath = join(homedir(), '.craft-agent', 'config.json')
+      const configPath = join(homedir(), '.link-agents', 'config.json')
       await unlink(configPath).catch(() => {
         // Ignore if file doesn't exist
       })
@@ -1109,7 +1109,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   }
 
   // Recursive directory scanner for workspace files
-  // Filters out internal directories (.craft-agent, node_modules, .git, etc.) and hidden files
+  // Filters out internal directories (.link-agents, node_modules, .git, etc.) and hidden files
   // Returns only non-empty directories
   async function scanWorkspaceDirectory(dirPath: string): Promise<import('../shared/types').SessionFile[]> {
     const { readdir, stat } = await import('fs/promises')
@@ -1117,7 +1117,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     const files: import('../shared/types').SessionFile[] = []
 
     // Internal directories to skip
-    const skipDirs = ['.craft-agent', 'node_modules', '.git', '.vscode', '.idea', 'dist', 'build', '.next', '.nuxt', '.output']
+    const skipDirs = ['.link-agents', 'node_modules', '.git', '.vscode', '.idea', 'dist', 'build', '.next', '.nuxt', '.output']
 
     for (const entry of entries) {
       // Skip hidden files and internal directories
@@ -1182,7 +1182,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     }
 
     try {
-      // Scan workspace root directory, but exclude internal directories like .craft-agent
+      // Scan workspace root directory, but exclude internal directories like .link-agents
       const { existsSync } = await import('fs')
       if (!existsSync(workspace.rootPath)) {
         return []
@@ -1431,7 +1431,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
     }
   })
 
-  // Get default permissions from ~/.craft-agent/permissions/default.json
+  // Get default permissions from ~/.link-agents/permissions/default.json
   // Returns raw JSON for UI display (patterns with comments), plus the file path
   ipcMain.handle(IPC_CHANNELS.DEFAULT_PERMISSIONS_GET, async () => {
     const { existsSync, readFileSync } = await import('fs')

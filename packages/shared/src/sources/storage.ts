@@ -8,26 +8,26 @@
  * NOT a workspace slug. The `LoadedSource.workspaceId` is derived via basename().
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'fs';
-import { join, basename } from 'path';
 import { randomUUID } from 'crypto';
-import type {
-  FolderSourceConfig,
-  SourceGuide,
-  LoadedSource,
-  CreateSourceInput,
-} from './types.ts';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { basename, join } from 'path';
 import { validateSourceConfig } from '../config/validators.ts';
 import { debug } from '../utils/debug.ts';
+import {
+    downloadIcon,
+    findIconFile,
+    isIconUrl,
+    needsIconDownload,
+    validateIconValue,
+} from '../utils/icon.ts';
 import { expandPath, toPortablePath } from '../utils/paths.ts';
 import { getWorkspaceSourcesPath } from '../workspaces/storage.ts';
-import {
-  validateIconValue,
-  findIconFile,
-  downloadIcon,
-  needsIconDownload,
-  isIconUrl,
-} from '../utils/icon.ts';
+import type {
+    CreateSourceInput,
+    FolderSourceConfig,
+    LoadedSource,
+    SourceGuide,
+} from './types.ts';
 
 // ============================================================
 // Directory Utilities
@@ -294,7 +294,7 @@ export { isIconUrl } from '../utils/icon.ts';
 
 /**
  * Load complete source with all files
- * @param workspaceRootPath - Absolute path to workspace folder (e.g., ~/.craft-agent/workspaces/xxx)
+ * @param workspaceRootPath - Absolute path to workspace folder (e.g., ~/.link-agents/workspaces/xxx)
  * @param sourceSlug - Source folder name
  */
 export function loadSource(workspaceRootPath: string, sourceSlug: string): LoadedSource | null {

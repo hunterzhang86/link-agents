@@ -4,19 +4,19 @@
  * These tests verify that dangerous shell commands are blocked in Safe (Explore) mode
  * while legitimate read-only commands are allowed.
  */
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import {
-  hasDangerousShellOperators,
-  hasDangerousSubstitution,
-  hasDangerousControlChars,
-  isReadOnlyBashCommand,
-  isReadOnlyBashCommandWithConfig,
-  getBashRejectionReason,
-  formatBashRejectionMessage,
-  SAFE_MODE_CONFIG,
-  DANGEROUS_CHAIN_OPERATORS,
-  DANGEROUS_REDIRECT_OPERATORS,
-  type CompiledBashPattern,
+    DANGEROUS_CHAIN_OPERATORS,
+    DANGEROUS_REDIRECT_OPERATORS,
+    formatBashRejectionMessage,
+    getBashRejectionReason,
+    hasDangerousControlChars,
+    hasDangerousShellOperators,
+    hasDangerousSubstitution,
+    isReadOnlyBashCommand,
+    isReadOnlyBashCommandWithConfig,
+    SAFE_MODE_CONFIG,
+    type CompiledBashPattern,
 } from '../src/agent/mode-manager.ts';
 
 // ============================================================
@@ -24,7 +24,7 @@ import {
 // ============================================================
 // SAFE_MODE_CONFIG has empty patterns (they're loaded from default.json at runtime).
 // For unit tests, we create a test config with patterns directly.
-// This mirrors the patterns from ~/.craft-agent/permissions/default.json
+// This mirrors the patterns from ~/.link-agents/permissions/default.json
 
 /**
  * Test configuration with patterns for unit testing.
@@ -834,7 +834,7 @@ describe('isReadOnlyBashCommand (full integration)', () => {
 
 describe('SAFE_MODE_CONFIG', () => {
   // Note: SAFE_MODE_CONFIG has empty patterns by design - actual patterns
-  // are loaded from ~/.craft-agent/permissions/default.json at runtime.
+  // are loaded from ~/.link-agents/permissions/default.json at runtime.
   // This allows users to customize patterns without rebuilding.
 
   it('should have blocked tools defined (hardcoded, not from JSON)', () => {

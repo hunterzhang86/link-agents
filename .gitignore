@@ -46,7 +46,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 pnpm-lock.yaml
 
 # Link Agent local data (sessions, credentials, config)
-.craft-agent/
+.link-agents/
 
 # SSH keys and secrets
 *.pem

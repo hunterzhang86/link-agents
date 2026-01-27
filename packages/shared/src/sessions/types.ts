@@ -9,9 +9,9 @@
  * - Lines 2+: StoredMessage (one message per line)
  */
 
+import type { StoredMessage } from '@link-agents/core/types';
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
-import type { StoredAttachment, MessageRole, ToolStatus, AuthRequestType, AuthStatus, CredentialInputMode, StoredMessage } from '@link-agents/core/types';
 
 /**
  * Todo state for sessions (user-controlled, never automatic)
@@ -115,7 +115,7 @@ export interface SessionHeader {
   id: string;
   /** SDK session ID (captured after first message) */
   sdkSessionId?: string;
-  /** Workspace root path (stored as portable path, e.g., ~/.craft-agent/...) */
+  /** Workspace root path (stored as portable path, e.g., ~/.link-agents/...) */
   workspaceRootPath: string;
   /** Optional user-defined name */
   name?: string;

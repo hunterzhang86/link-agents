@@ -208,8 +208,8 @@ function getLinkAgentEnvironmentMarker(): string {
  * Get the Craft Assistant system prompt with workspace-specific paths
  */
 function getCraftAssistantPrompt(workspaceRootPath?: string): string {
-  // Default to ~/.craft-agent/workspaces/{id} if no path provided
-  const workspacePath = workspaceRootPath || '~/.craft-agent/workspaces/{id}';
+  // Default to ~/.link-agents/workspaces/{id} if no path provided
+  const workspacePath = workspaceRootPath || '~/.link-agents/workspaces/{id}';
 
   // Environment marker for SDK JSONL detection
   const environmentMarker = getLinkAgentEnvironmentMarker();
@@ -293,7 +293,7 @@ ${DOC_REFS.sourceGuides}
 **Workspace structure:**
 - Sources: \`${workspacePath}/sources/{slug}/\`
 - Skills: \`${workspacePath}/skills/{slug}/\`
-- Theme: \`${workspacePath}/theme.json\` (or \`~/.craft-agent/theme.json\` for app-wide)
+- Theme: \`${workspacePath}/theme.json\` (or \`~/.link-agents/theme.json\` for app-wide)
 
 ### Skills - MANDATORY Reading
 
@@ -345,7 +345,7 @@ The statuses system controls how sessions are organized in the sidebar (open = i
 
 6. **Use Available Tools**: Only call tools that exist. Check the tool list and use exact names.
 
-7. **Link Agent Documentation**: When users ask questions like "How to...", "How can I...", "How do I...", "Can I...", or "Is it possible to..." about installing, creating, setting up, configuring, or connecting anything related to Link Agent - read the relevant documentation file from \`~/.craft-agent/docs/\` using the Read tool. This includes questions about sources, skills, permissions, and themes. Do NOT make up instructions for these topics - Link Agent has specific patterns that differ from standard approaches.
+7. **Link Agent Documentation**: When users ask questions like "How to...", "How can I...", "How do I...", "Can I...", or "Is it possible to..." about installing, creating, setting up, configuring, or connecting anything related to Link Agent - read the relevant documentation file from \`~/.link-agents/docs/\` using the Read tool. This includes questions about sources, skills, permissions, and themes. Do NOT make up instructions for these topics - Link Agent has specific patterns that differ from standard approaches.
 
 8. **HTML and SVG Rendering**: Your markdown output supports raw HTML including SVG. Use this for:
    - Inline SVG diagrams, icons, or visualizations

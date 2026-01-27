@@ -78,8 +78,8 @@ Three-level permission system per session:
 
 ### Permissions Configuration (`src/agent/permissions-config.ts`)
 Customizable safety rules at two levels (additive merging):
-- Workspace: `~/.craft-agent/workspaces/{id}/permissions.json`
-- Source: `~/.craft-agent/workspaces/{id}/sources/{slug}/permissions.json`
+- Workspace: `~/.link-agents/workspaces/{id}/permissions.json`
+- Source: `~/.link-agents/workspaces/{id}/sources/{slug}/permissions.json`
 
 **Rule types:**
 - `blockedTools` - Tools to block (extends defaults)
@@ -100,7 +100,7 @@ Tools available within agent sessions with callback registry:
 ### Dynamic Status System (`src/statuses/`)
 Workspace-level customizable workflow states:
 
-**Storage:** `~/.craft-agent/workspaces/{id}/statuses/config.json`
+**Storage:** `~/.link-agents/workspaces/{id}/statuses/config.json`
 
 **Status properties:** `id`, `label`, `color`, `icon`, `shortcut`, `category` (open/closed), `isFixed`, `isDefault`, `order`
 
@@ -112,8 +112,8 @@ Workspace-level customizable workflow states:
 Cascading theme configuration: app → workspace (last wins)
 
 **Storage:**
-- App: `~/.craft-agent/theme.json`
-- Workspace: `~/.craft-agent/workspaces/{id}/theme.json`
+- App: `~/.link-agents/theme.json`
+- Workspace: `~/.link-agents/workspaces/{id}/theme.json`
 
 **6-color system:** `background`, `foreground`, `accent`, `info`, `success`, `destructive`
 
@@ -125,10 +125,10 @@ Cascading theme configuration: app → workspace (last wins)
 - **index.ts:** Session listing and metadata
 
 ### Credentials (`src/credentials/`)
-All sensitive credentials (API keys, OAuth tokens) are stored in an AES-256-GCM encrypted file at `~/.craft-agent/credentials.enc`. The `CredentialManager` provides the API for reading and writing credentials.
+All sensitive credentials (API keys, OAuth tokens) are stored in an AES-256-GCM encrypted file at `~/.link-agents/credentials.enc`. The `CredentialManager` provides the API for reading and writing credentials.
 
 ### Configuration (`src/config/storage.ts`)
-Multi-workspace configuration stored in `~/.craft-agent/config.json`. Supports:
+Multi-workspace configuration stored in `~/.link-agents/config.json`. Supports:
 - Multiple workspaces with separate MCP servers and sessions
 - Default permission mode for new sessions
 - Extended cache TTL preference
@@ -140,7 +140,7 @@ File watcher for live config updates:
 - Callbacks: `onConfigChange`, `onThemeChange`, `onWorkspacePermissionsChange`, `onSourcePermissionsChange`
 
 ### Sources (`src/sources/`)
-Sources are external data connections (MCP servers, APIs, local filesystems). Stored at `~/.craft-agent/workspaces/{id}/sources/{slug}/` with config.json and guide.md. Types: `mcp`, `api`, `local`, `gmail`.
+Sources are external data connections (MCP servers, APIs, local filesystems). Stored at `~/.link-agents/workspaces/{id}/sources/{slug}/` with config.json and guide.md. Types: `mcp`, `api`, `local`, `gmail`.
 
 ## Dependencies
 

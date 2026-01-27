@@ -1,35 +1,31 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync } from 'fs';
-import { join, dirname } from 'path';
-import { getCredentialManager } from '../credentials/index.ts';
-import { getOrCreateLatestSession, type SessionConfig } from '../sessions/index.ts';
-import {
-  discoverWorkspacesInDefaultLocation,
-  loadWorkspaceConfig,
-  createWorkspaceAtPath,
-  isValidWorkspace,
-} from '../workspaces/storage.ts';
-import { findIconFile } from '../utils/icon.ts';
-import { initializeDocs } from '../docs/index.ts';
-import { expandPath, toPortablePath } from '../utils/paths.ts';
-import { CONFIG_DIR } from './paths.ts';
-import type { StoredAttachment, StoredMessage } from '@link-agents/core/types';
+import type { StoredMessage } from '@link-agents/core/types';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
 import type { Plan } from '../agent/plan-types.ts';
-import type { PermissionMode } from '../agent/mode-manager.ts';
+import { getCredentialManager } from '../credentials/index.ts';
+import { initializeDocs } from '../docs/index.ts';
+import { getOrCreateLatestSession, type SessionConfig } from '../sessions/index.ts';
+import { findIconFile } from '../utils/icon.ts';
+import { expandPath, toPortablePath } from '../utils/paths.ts';
+import {
+    createWorkspaceAtPath,
+    discoverWorkspacesInDefaultLocation,
+    isValidWorkspace,
+    loadWorkspaceConfig,
+} from '../workspaces/storage.ts';
 import { BUNDLED_CONFIG_DEFAULTS, type ConfigDefaults } from './config-defaults-schema.ts';
+import { CONFIG_DIR } from './paths.ts';
 
 // Re-export CONFIG_DIR for convenience (centralized in paths.ts)
 export { CONFIG_DIR } from './paths.ts';
 
 // Re-export base types from core (single source of truth)
 export type {
-  Workspace,
-  McpAuthType,
-  AuthType,
-  OAuthCredentials,
+    AuthType, McpAuthType, OAuthCredentials, Workspace
 } from '@link-agents/core/types';
 
 // Import for local use
-import type { Workspace, AuthType } from '@link-agents/core/types';
+import type { AuthType, Workspace } from '@link-agents/core/types';
 
 /**
  * Pending update info for auto-install on next launch
@@ -108,7 +104,7 @@ export function ensureConfigDir(bundledResourcesDir?: string): void {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
   }
-  // Initialize bundled docs (creates ~/.craft-agent/docs/ with sources.md, agents.md, permissions.md)
+  // Initialize bundled docs (creates ~/.link-agents/docs/ with sources.md, agents.md, permissions.md)
   initializeDocs();
 
   // Initialize config defaults
@@ -791,15 +787,15 @@ export function getAllSessionDrafts(): Record<string, string> {
 // Theme Storage (App-level only)
 // ============================================
 
-import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
 import { readdirSync } from 'fs';
+import type { PresetTheme, ThemeFile, ThemeOverrides } from './theme.ts';
 
 const APP_THEME_FILE = join(CONFIG_DIR, 'theme.json');
 const APP_THEMES_DIR = join(CONFIG_DIR, 'themes');
 
 /**
  * Get the app-level themes directory.
- * Preset themes are stored at ~/.craft-agent/themes/
+ * Preset themes are stored at ~/.link-agents/themes/
  */
 export function getAppThemesDir(): string {
   return APP_THEMES_DIR;

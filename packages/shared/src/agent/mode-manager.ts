@@ -1614,5 +1614,5 @@ You can customize Explore mode via \`permissions.json\` files - extend what's al
 | Workspace | \`{workspaceRoot}/permissions.json\` | All sources in workspace |
 | Per-source | \`{workspaceRoot}/sources/{slug}/permissions.json\` | That source only (auto-scoped) |
 
-**Before editing**: Read \`~/.craft-agent/docs/permissions.md\` for the full schema and examples.`;
+**Before editing**: Read \`~/.link-agents/docs/permissions.md\` for the full schema and examples.`;
 }

@@ -5,48 +5,47 @@
  * Uses recursive directory watching for simplicity and reliability.
  *
  * Watched paths:
- * - ~/.craft-agent/config.json - Main app configuration
- * - ~/.craft-agent/preferences.json - User preferences
- * - ~/.craft-agent/theme.json - App-level theme overrides
- * - ~/.craft-agent/themes/*.json - Preset theme files (app-level)
- * - ~/.craft-agent/workspaces/{slug}/ - Workspace directory (recursive)
+ * - ~/.link-agents/config.json - Main app configuration
+ * - ~/.link-agents/preferences.json - User preferences
+ * - ~/.link-agents/theme.json - App-level theme overrides
+ * - ~/.link-agents/themes/*.json - Preset theme files (app-level)
+ * - ~/.link-agents/workspaces/{slug}/ - Workspace directory (recursive)
  *   - sources/{slug}/config.json, guide.md, permissions.json
  *   - skills/{slug}/SKILL.md, icon.*
  *   - permissions.json
  */
 
-import { watch, existsSync, readdirSync, statSync, readFileSync, mkdirSync } from 'fs';
-import { join, dirname, basename, relative } from 'path';
 import type { FSWatcher } from 'fs';
-import { CONFIG_DIR } from './paths.ts';
-import { debug } from '../utils/debug.ts';
-import { perf } from '../utils/perf.ts';
-import { loadStoredConfig, type StoredConfig } from './storage.ts';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, watch } from 'fs';
+import { join } from 'path';
+import { getAppPermissionsDir, permissionsConfigCache } from '../agent/permissions-config.ts';
+import { downloadSkillIcon, loadSkill, loadWorkspaceSkills, skillNeedsIconDownload } from '../skills/storage.ts';
+import type { LoadedSkill } from '../skills/types.ts';
 import {
-  validateConfig,
-  validatePreferences,
-  validateSource,
-  type ValidationResult,
-} from './validators.ts';
+    downloadSourceIcon,
+    loadSource,
+    loadSourceGuide,
+    loadWorkspaceSources,
+    sourceNeedsIconDownload,
+} from '../sources/storage.ts';
 import type { LoadedSource, SourceGuide } from '../sources/types.ts';
 import {
-  loadSource,
-  loadWorkspaceSources,
-  loadSourceGuide,
-  sourceNeedsIconDownload,
-  downloadSourceIcon,
-} from '../sources/storage.ts';
-import { permissionsConfigCache, getAppPermissionsDir } from '../agent/permissions-config.ts';
-import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '../workspaces/storage.ts';
-import type { LoadedSkill } from '../skills/types.ts';
-import { loadSkill, loadWorkspaceSkills, skillNeedsIconDownload, downloadSkillIcon } from '../skills/storage.ts';
-import {
-  loadStatusConfig,
-  statusNeedsIconDownload,
-  downloadStatusIcon,
+    downloadStatusIcon,
+    loadStatusConfig,
+    statusNeedsIconDownload,
 } from '../statuses/storage.ts';
-import { loadAppTheme, loadPresetThemes, loadPresetTheme, getAppThemesDir } from './storage.ts';
-import type { ThemeOverrides, PresetTheme } from './theme.ts';
+import { debug } from '../utils/debug.ts';
+import { perf } from '../utils/perf.ts';
+import { getWorkspacePath, getWorkspaceSkillsPath, getWorkspaceSourcesPath } from '../workspaces/storage.ts';
+import { CONFIG_DIR } from './paths.ts';
+import { getAppThemesDir, loadAppTheme, loadPresetTheme, loadPresetThemes, loadStoredConfig, type StoredConfig } from './storage.ts';
+import type { PresetTheme, ThemeOverrides } from './theme.ts';
+import {
+    validateConfig,
+    validatePreferences,
+    validateSource,
+    type ValidationResult,
+} from './validators.ts';
 
 // ============================================================
 // Constants
@@ -102,7 +101,7 @@ export interface ConfigWatcherCallbacks {
   onSkillsListChange?: (skills: LoadedSkill[]) => void;
 
   // Permissions callbacks
-  /** Called when app-level default permissions change (~/.craft-agent/permissions/default.json) */
+  /** Called when app-level default permissions change (~/.link-agents/permissions/default.json) */
   onDefaultPermissionsChange?: () => void;
   /** Called when workspace permissions.json changes */
   onWorkspacePermissionsChange?: (workspaceId: string) => void;
@@ -814,7 +813,7 @@ export class ConfigWatcher {
   }
 
   /**
-   * Watch app-level themes directory (~/.craft-agent/themes/)
+   * Watch app-level themes directory (~/.link-agents/themes/)
    */
   private watchAppThemesDir(): void {
     const themesDir = getAppThemesDir();
@@ -843,7 +842,7 @@ export class ConfigWatcher {
   }
 
   /**
-   * Watch app-level permissions directory (~/.craft-agent/permissions/)
+   * Watch app-level permissions directory (~/.link-agents/permissions/)
    * Watches for changes to default.json which contains the default read-only patterns
    */
   private watchAppPermissionsDir(): void {

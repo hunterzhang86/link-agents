@@ -2,32 +2,31 @@
  * PermissionsSettingsPage
  *
  * Displays permissions configuration for Explore mode.
- * Shows both default patterns (from ~/.craft-agent/permissions/default.json)
+ * Shows both default patterns (from ~/.link-agents/permissions/default.json)
  * and custom workspace additions (from workspace permissions.json).
  *
- * Default patterns can be edited by the user in ~/.craft-agent/permissions/default.json.
+ * Default patterns can be edited by the user in ~/.link-agents/permissions/default.json.
  * Custom patterns can be edited via workspace permissions.json file.
  */
 
-import * as React from 'react'
-import { useState, useEffect, useMemo } from 'react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Loader2 } from 'lucide-react'
-import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
-import { type PermissionsConfigFile } from '@link-agents/shared/agent/modes'
 import {
-  PermissionsDataTable,
-  type PermissionRow,
+    PermissionsDataTable,
+    type PermissionRow,
 } from '@/components/info'
 import {
-  SettingsSection,
-  SettingsCard,
+    SettingsCard,
+    SettingsSection,
 } from '@/components/settings'
-import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
+import { EditButton, EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { type PermissionsConfigFile } from '@link-agents/shared/agent/modes'
+import { Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -35,7 +34,7 @@ export const meta: DetailsPageMeta = {
 }
 
 /**
- * Build default permissions data from ~/.craft-agent/permissions/default.json.
+ * Build default permissions data from ~/.link-agents/permissions/default.json.
  * These are the Explore mode patterns that can be customized by the user.
  * Patterns can include comments which are displayed in the table.
  *
@@ -138,7 +137,7 @@ export default function PermissionsSettingsPage() {
   const [defaultPermissionsPath, setDefaultPermissionsPath] = useState<string | null>(null)
   const [customConfig, setCustomConfig] = useState<PermissionsConfigFile | null>(null)
 
-  // Build default permissions data from ~/.craft-agent/permissions/default.json
+  // Build default permissions data from ~/.link-agents/permissions/default.json
   const defaultPermissionsData = useMemo(() => buildDefaultPermissionsData(defaultConfig), [defaultConfig])
 
   // Build custom permissions data from workspace permissions.json
@@ -236,7 +235,7 @@ export default function PermissionsSettingsPage() {
                         <div className="p-8 text-center text-muted-foreground">
                           <p className="text-sm">No default permissions found.</p>
                           <p className="text-xs mt-1 text-foreground/40">
-                            Default permissions should be at <code className="bg-foreground/5 px-1 rounded">~/.craft-agent/permissions/default.json</code>
+                            Default permissions should be at <code className="bg-foreground/5 px-1 rounded">~/.link-agents/permissions/default.json</code>
                           </p>
                         </div>
                       )}

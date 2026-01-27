@@ -3,50 +3,45 @@
 
 // Import and re-export core types
 import type {
-  Message as CoreMessage,
-  MessageRole as CoreMessageRole,
-  TypedError,
-  TokenUsage as CoreTokenUsage,
-  Workspace as CoreWorkspace,
-  SessionMetadata as CoreSessionMetadata,
-  StoredAttachment as CoreStoredAttachment,
-  ContentBadge,
+    ContentBadge,
+    Message as CoreMessage,
+    MessageRole as CoreMessageRole,
+    SessionMetadata as CoreSessionMetadata,
+    StoredAttachment as CoreStoredAttachment,
+    TokenUsage as CoreTokenUsage,
+    Workspace as CoreWorkspace,
+    TypedError,
 } from '@link-agents/core/types';
 
 // Import mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@link-agents/shared/agent/modes';
-export type { PermissionMode };
 export { PERMISSION_MODE_CONFIG } from '@link-agents/shared/agent/modes';
+export type { PermissionMode };
 
 // Import thinking level types
 import type { ThinkingLevel } from '@link-agents/shared/agent/thinking-levels';
+export { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@link-agents/shared/agent/thinking-levels';
 export type { ThinkingLevel };
-export { THINKING_LEVELS, DEFAULT_THINKING_LEVEL } from '@link-agents/shared/agent/thinking-levels';
 
 export type {
-  CoreMessage as Message,
-  CoreMessageRole as MessageRole,
-  TypedError,
-  CoreTokenUsage as TokenUsage,
-  CoreWorkspace as Workspace,
-  CoreSessionMetadata as SessionMetadata,
-  CoreStoredAttachment as StoredAttachment,
-  ContentBadge,
+    ContentBadge, CoreMessage as Message,
+    CoreMessageRole as MessageRole, CoreSessionMetadata as SessionMetadata,
+    CoreStoredAttachment as StoredAttachment, CoreTokenUsage as TokenUsage, TypedError, CoreWorkspace as Workspace
 };
 
 // Import and re-export auth types for onboarding
 // Use types-only subpaths to avoid pulling in Node.js dependencies
-import type { AuthState, SetupNeeds } from '@link-agents/shared/auth/types';
-import type { AuthType } from '@link-agents/shared/config/types';
-export type { AuthState, SetupNeeds, AuthType };
+    import type { AuthState, SetupNeeds } from '@link-agents/shared/auth/types';
+    import type { AuthType } from '@link-agents/shared/config/types';
+export type { AuthState, AuthType, SetupNeeds };
 
 // Import source types for session source selection
-import type { LoadedSource, FolderSourceConfig, SourceConnectionStatus } from '@link-agents/shared/sources/types';
-export type { LoadedSource, FolderSourceConfig, SourceConnectionStatus };
+    import type { FolderSourceConfig, LoadedSource, SourceConnectionStatus } from '@link-agents/shared/sources/types';
+export type { FolderSourceConfig, LoadedSource, SourceConnectionStatus };
 
 // Import skill types
-import type { LoadedSkill, SkillMetadata, SkillSource, SkillCatalogEntry, SkillCatalog } from '@link-agents/shared/skills/types';
-export type { LoadedSkill, SkillMetadata, SkillSource, SkillCatalogEntry, SkillCatalog };
+    import type { LoadedSkill, SkillCatalog, SkillCatalogEntry, SkillMetadata, SkillSource } from '@link-agents/shared/skills/types';
+export type { LoadedSkill, SkillCatalog, SkillCatalogEntry, SkillMetadata, SkillSource };
 
 
 /**
@@ -72,9 +67,9 @@ export interface SessionFile {
 }
 
 // Import auth request types for unified auth flow
-import type { AuthRequest as SharedAuthRequest, CredentialInputMode as SharedCredentialInputMode, CredentialAuthRequest as SharedCredentialAuthRequest } from '@link-agents/shared/agent';
-export type { SharedAuthRequest as AuthRequest };
-export type { SharedCredentialInputMode as CredentialInputMode };
+import type { PermissionRequest as BasePermissionRequest } from '@link-agents/core/types';
+import type { AuthRequest as SharedAuthRequest, CredentialAuthRequest as SharedCredentialAuthRequest, CredentialInputMode as SharedCredentialInputMode } from '@link-agents/shared/agent';
+export type { SharedAuthRequest as AuthRequest, SharedCredentialInputMode as CredentialInputMode };
 // CredentialRequest is used by UI components for displaying credential input
 export type CredentialRequest = SharedCredentialAuthRequest;
 export { generateMessageId } from '@link-agents/core/types';
@@ -135,7 +130,6 @@ export interface RefreshTitleResult {
 
 // Re-export permission types from core, extended with sessionId for multi-session context
 export type { PermissionRequest as BasePermissionRequest } from '@link-agents/core/types';
-import type { PermissionRequest as BasePermissionRequest } from '@link-agents/core/types';
 
 /**
  * Permission request with session context (for multi-session Electron app)
@@ -569,7 +563,7 @@ export const IPC_CHANNELS = {
   SOURCES_GET_PERMISSIONS: 'sources:getPermissions',
   // Workspace permissions config (for Explore mode)
   WORKSPACE_GET_PERMISSIONS: 'workspace:getPermissions',
-  // Default permissions from ~/.craft-agent/permissions/default.json
+  // Default permissions from ~/.link-agents/permissions/default.json
   DEFAULT_PERMISSIONS_GET: 'permissions:getDefaults',
   // Broadcast when default permissions change (file watcher)
   DEFAULT_PERMISSIONS_CHANGED: 'permissions:defaultsChanged',
@@ -651,7 +645,7 @@ export const IPC_CHANNELS = {
 } as const
 
 // Re-import types for ElectronAPI
-import type { Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@link-agents/core/types';
+import type { StoredAttachment as StoredAttachmentType, Workspace } from '@link-agents/core/types';
 
 // Type-safe IPC API exposed to renderer
 export interface ElectronAPI {

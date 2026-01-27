@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { slugify } from "@/lib/slugify"
+import { cn } from "@/lib/utils"
+import { ArrowLeft } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 import { Input } from "../ui/input"
-import { Button } from "../ui/button"
-import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspaceSecondaryButton, AddWorkspacePrimaryButton } from "./primitives"
 import { AddWorkspace_RadioOption } from "./AddWorkspace_RadioOption"
+import { AddWorkspaceContainer, AddWorkspacePrimaryButton, AddWorkspaceSecondaryButton, AddWorkspaceStepHeader } from "./primitives"
 
 type LocationOption = 'default' | 'custom'
 
@@ -20,7 +19,7 @@ interface AddWorkspaceStep_CreateNewProps {
  *
  * Fields:
  * - Workspace name (required)
- * - Location: Default (~/.craft-agent/workspaces/) or Custom
+ * - Location: Default (~/.link-agents/workspaces/) or Custom
  */
 export function AddWorkspaceStep_CreateNew({
   onBack,
@@ -40,7 +39,7 @@ export function AddWorkspaceStep_CreateNew({
   }, [])
 
   const slug = slugify(name)
-  const defaultBasePath = homeDir ? `${homeDir}/.craft-agent/workspaces` : '~/.craft-agent/workspaces'
+  const defaultBasePath = homeDir ? `${homeDir}/.link-agents/workspaces` : '~/.link-agents/workspaces'
   const finalPath = locationOption === 'default'
     ? `${defaultBasePath}/${slug}`
     : customPath
@@ -144,7 +143,7 @@ export function AddWorkspaceStep_CreateNew({
             onChange={() => setLocationOption('default')}
             disabled={isCreating}
             title="Default location"
-            subtitle="under .craft-agent folder"
+            subtitle="under .link-agents folder"
           />
 
           {/* Custom location option */}

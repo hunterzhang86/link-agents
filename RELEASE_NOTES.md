@@ -89,7 +89,7 @@ A comprehensive skills management system has been added, enabling users to exten
 ### 🔄 Migration Notes
 
 **For Existing Users:**
-- Configuration directory has changed from `~/.craft-agent/` to `~/.link-agents/`
+- Configuration directory has changed from `~/.link-agents/` to `~/.link-agents/`
 - You may need to migrate your existing configuration
 - Skills from previous versions will need to be re-imported if using the new skills system
 

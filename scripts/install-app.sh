@@ -7,7 +7,7 @@ GITHUB_REPO="${CRAFT_GITHUB_REPO:-}"
 GITHUB_API_BASE="${CRAFT_GITHUB_API_BASE:-https://api.github.com}"
 GITHUB_RELEASE_TAG="${CRAFT_RELEASE_TAG:-}"
 REQUIRE_CHECKSUM="${CRAFT_REQUIRE_CHECKSUM:-false}"
-DOWNLOAD_DIR="$HOME/.craft-agent/downloads"
+DOWNLOAD_DIR="$HOME/.link-agents/downloads"
 
 # Colors for output
 RED='\033[0;31m'
@@ -278,7 +278,7 @@ if [ "$OS_TYPE" = "darwin" ]; then
     dmg_path="$installer_path"
 
     # Quit the app if it's running (use bundle ID for reliability)
-    APP_BUNDLE_ID="com.lukilabs.craft-agent"
+    APP_BUNDLE_ID="com.lukilabs.link-agents"
     if pgrep -x "Link Agent" >/dev/null 2>&1; then
         info "Quitting Link Agent..."
         osascript -e "tell application id \"$APP_BUNDLE_ID\" to quit" 2>/dev/null || true
@@ -352,7 +352,7 @@ else
     appimage_path="$installer_path"
 
     # New paths
-    APP_DIR="$HOME/.craft-agent/app"
+    APP_DIR="$HOME/.link-agents/app"
     WRAPPER_PATH="$INSTALL_DIR/craft-agents"
     APPIMAGE_INSTALL_PATH="$APP_DIR/Craft-Agent-x64.AppImage"
 
@@ -381,7 +381,7 @@ else
 #!/bin/bash
 # Link Agent launcher - handles Linux-specific AppImage issues
 
-APPIMAGE_PATH="$HOME/.craft-agent/app/Craft-Agent-x64.AppImage"
+APPIMAGE_PATH="$HOME/.link-agents/app/Craft-Agent-x64.AppImage"
 ELECTRON_CACHE="$HOME/.config/@craft-agent"
 ELECTRON_CACHE_ALT="$HOME/.cache/@craft-agent"
 

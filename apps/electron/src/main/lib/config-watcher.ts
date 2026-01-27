@@ -5,53 +5,50 @@
  * Uses recursive directory watching for simplicity and reliability.
  *
  * Watched paths:
- * - ~/.craft-agent/config.json - Main app configuration
- * - ~/.craft-agent/preferences.json - User preferences
- * - ~/.craft-agent/theme.json - App-level theme overrides
- * - ~/.craft-agent/themes/*.json - Preset theme files (app-level)
- * - ~/.craft-agent/workspaces/{slug}/ - Workspace directory (recursive)
+ * - ~/.link-agents/config.json - Main app configuration
+ * - ~/.link-agents/preferences.json - User preferences
+ * - ~/.link-agents/theme.json - App-level theme overrides
+ * - ~/.link-agents/themes/*.json - Preset theme files (app-level)
+ * - ~/.link-agents/workspaces/{slug}/ - Workspace directory (recursive)
  *   - sources/{slug}/config.json, guide.md, permissions.json
  *   - skills/{slug}/SKILL.md, icon.*
  *   - permissions.json
  */
 
-import { watch, existsSync, readdirSync, statSync, readFileSync, mkdirSync } from 'fs';
-import { join, dirname, basename, relative } from 'path';
-import { homedir } from 'os';
-import type { FSWatcher } from 'fs';
-import { debug, perf } from '@link-agents/shared/utils';
-import { loadStoredConfig, type StoredConfig } from '@link-agents/shared/config';
+import { getAppPermissionsDir, permissionsConfigCache } from '@link-agents/shared/agent';
+import type { PresetTheme, ThemeOverrides } from '@link-agents/shared/config';
 import {
-  validateConfig,
-  validatePreferences,
-  validateSource,
-  type ValidationResult,
+    getAppThemesDir, loadAppTheme, loadPresetTheme, loadPresetThemes, loadStoredConfig, validateConfig,
+    validatePreferences,
+    validateSource, type StoredConfig, type ValidationResult
 } from '@link-agents/shared/config';
+import type { LoadedSkill } from '@link-agents/shared/skills';
+import { downloadSkillIcon, loadSkill, loadWorkspaceSkills, skillNeedsIconDownload } from '@link-agents/shared/skills';
 import type { LoadedSource, SourceGuide } from '@link-agents/shared/sources';
 import {
-  loadSource,
-  loadWorkspaceSources,
-  loadSourceGuide,
-  sourceNeedsIconDownload,
-  downloadSourceIcon,
+    downloadSourceIcon,
+    loadSource,
+    loadSourceGuide,
+    loadWorkspaceSources,
+    sourceNeedsIconDownload,
 } from '@link-agents/shared/sources';
-import { permissionsConfigCache, getAppPermissionsDir } from '@link-agents/shared/agent';
-import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '@link-agents/shared/workspaces';
-import type { LoadedSkill } from '@link-agents/shared/skills';
-import { loadSkill, loadWorkspaceSkills, skillNeedsIconDownload, downloadSkillIcon } from '@link-agents/shared/skills';
 import {
-  loadStatusConfig,
-  statusNeedsIconDownload,
-  downloadStatusIcon,
+    downloadStatusIcon,
+    loadStatusConfig,
+    statusNeedsIconDownload,
 } from '@link-agents/shared/statuses';
-import { loadAppTheme, loadPresetThemes, loadPresetTheme, getAppThemesDir } from '@link-agents/shared/config';
-import type { ThemeOverrides, PresetTheme } from '@link-agents/shared/config';
+import { debug, perf } from '@link-agents/shared/utils';
+import { getWorkspacePath, getWorkspaceSkillsPath, getWorkspaceSourcesPath } from '@link-agents/shared/workspaces';
+import type { FSWatcher } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, watch } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 
 // ============================================================
 // Constants
 // ============================================================
 
-const CONFIG_DIR = join(homedir(), '.craft-agent');
+const CONFIG_DIR = join(homedir(), '.link-agents');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 const PREFERENCES_FILE = join(CONFIG_DIR, 'preferences.json');
 
@@ -102,7 +99,7 @@ export interface ConfigWatcherCallbacks {
   onSkillsListChange?: (skills: LoadedSkill[]) => void;
 
   // Permissions callbacks
-  /** Called when app-level default permissions change (~/.craft-agent/permissions/default.json) */
+  /** Called when app-level default permissions change (~/.link-agents/permissions/default.json) */
   onDefaultPermissionsChange?: () => void;
   /** Called when workspace permissions.json changes */
   onWorkspacePermissionsChange?: (workspaceId: string) => void;
@@ -834,7 +831,7 @@ export class ConfigWatcher {
   }
 
   /**
-   * Watch app-level themes directory (~/.craft-agent/themes/)
+   * Watch app-level themes directory (~/.link-agents/themes/)
    */
   private watchAppThemesDir(): void {
     const themesDir = getAppThemesDir();
@@ -863,7 +860,7 @@ export class ConfigWatcher {
   }
 
   /**
-   * Watch app-level permissions directory (~/.craft-agent/permissions/)
+   * Watch app-level permissions directory (~/.link-agents/permissions/)
    * Watches for changes to default.json which contains the default read-only patterns
    */
   private watchAppPermissionsDir(): void {
