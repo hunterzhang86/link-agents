@@ -217,6 +217,12 @@ jobs:
           Get-ChildItem -Path $tmp.FullName -Recurse -Depth 6 -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host $_.FullName
           }
+          $app7z = Join-Path $tmp.FullName '$PLUGINSDIR\app-64.7z'
+          if (Test-Path $app7z) {
+            $appDir = Join-Path $tmp.FullName 'app-64'
+            New-Item -ItemType Directory -Force -Path $appDir | Out-Null
+            7z x $app7z "-o$($appDir)" | Out-Null
+          }
           $cli = Get-ChildItem -Path $tmp.FullName -Recurse -Filter cli.js -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -match "claude-agent-sdk[\\\\/]cli\.js$" } |
             Select-Object -First 1
