@@ -515,27 +515,37 @@ export class SessionManager {
 
   async initialize(): Promise<void> {
     // Set path to Claude Code executable (cli.js from SDK)
-    // In packaged app: use app.getAppPath() (points to app folder, ASAR is disabled)
+    // In packaged app: try app.getAppPath() first, then fall back to resources paths
     // In development: use process.cwd()
     const basePath = app.isPackaged ? app.getAppPath() : process.cwd()
+    const packagedRoots = app.isPackaged
+      ? [basePath, join(process.resourcesPath, 'app'), process.resourcesPath]
+      : [basePath]
 
-    const cliPath = join(basePath, 'node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js')
-    if (!existsSync(cliPath)) {
-      const error = `Claude Code SDK not found at ${cliPath}. The app package may be corrupted.`
+    const resolvePackagedPath = (parts: string[], label: string): string => {
+      for (const root of packagedRoots) {
+        if (!root) continue
+        const candidate = join(root, ...parts)
+        if (existsSync(candidate)) return candidate
+      }
+      const error = `${label} not found. Tried roots: ${packagedRoots.filter(Boolean).join(', ')}`
       sessionLog.error(error)
       throw new Error(error)
     }
+
+    const cliPath = resolvePackagedPath(
+      ['node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js'],
+      'Claude Code SDK'
+    )
     sessionLog.info('Setting pathToClaudeCodeExecutable:', cliPath)
     setPathToClaudeCodeExecutable(cliPath)
 
     // Set path to fetch interceptor for SDK subprocess
     // This interceptor captures API errors and adds metadata to MCP tool schemas
-    const interceptorPath = join(basePath, 'packages', 'shared', 'src', 'network-interceptor.ts')
-    if (!existsSync(interceptorPath)) {
-      const error = `Network interceptor not found at ${interceptorPath}. The app package may be corrupted.`
-      sessionLog.error(error)
-      throw new Error(error)
-    }
+    const interceptorPath = resolvePackagedPath(
+      ['packages', 'shared', 'src', 'network-interceptor.ts'],
+      'Network interceptor'
+    )
     // Skip interceptor on Windows development (--preload is bun-specific, not supported by node)
     if (process.platform !== 'win32' || app.isPackaged) {
       sessionLog.info('Setting interceptorPath:', interceptorPath)
@@ -549,15 +559,12 @@ export class SessionManager {
     if (app.isPackaged) {
       // Use platform-specific binary name (bun.exe on Windows, bun on macOS/Linux)
       const bunBinary = process.platform === 'win32' ? 'bun.exe' : 'bun'
-      // On Windows, bun.exe is in extraResources (process.resourcesPath) to avoid EBUSY errors.
-      // On macOS/Linux, bun is in the app files (basePath). See electron-builder.yml for details.
-      const bunBasePath = process.platform === 'win32' ? process.resourcesPath : basePath
-      const bunPath = join(bunBasePath, 'vendor', 'bun', bunBinary)
-      if (!existsSync(bunPath)) {
-        const error = `Bundled Bun runtime not found at ${bunPath}. The app package may be corrupted.`
-        sessionLog.error(error)
-        throw new Error(error)
-      }
+      // On Windows and macOS, bun is in extraResources (process.resourcesPath) to avoid copy errors.
+      // On Linux, bun is bundled in the app files (basePath). See electron-builder.yml for details.
+      const bunPath = resolvePackagedPath(
+        ['vendor', 'bun', bunBinary],
+        'Bundled Bun runtime'
+      )
       sessionLog.info('Setting executable:', bunPath)
       setExecutable(bunPath)
     } else {

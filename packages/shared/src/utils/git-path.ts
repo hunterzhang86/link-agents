@@ -46,16 +46,18 @@ export function getBundledGitPathForElectron(
   // Determine git binary name based on platform
   const gitBinary = process.platform === 'win32' ? 'git.exe' : 'git';
 
-  // On Windows, git is in extraResources (process.resourcesPath) to avoid EBUSY errors.
-  // On macOS/Linux, git is in the app files (basePath).
-  const gitBasePath = process.platform === 'win32' && resourcesPath
-    ? resourcesPath
-    : basePath;
+  const candidates = [
+    basePath,
+    // On Windows and macOS, git may be in extraResources (process.resourcesPath).
+    resourcesPath,
+    resourcesPath ? join(resourcesPath, 'app') : undefined,
+  ].filter(Boolean) as string[];
 
-  const gitPath = join(gitBasePath, 'vendor', 'git', 'bin', gitBinary);
-
-  if (existsSync(gitPath)) {
-    return gitPath;
+  for (const candidateBase of candidates) {
+    const gitPath = join(candidateBase, 'vendor', 'git', 'bin', gitBinary);
+    if (existsSync(gitPath)) {
+      return gitPath;
+    }
   }
 
   return null; // Fall back to system git if bundled git not found
